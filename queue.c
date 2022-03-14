@@ -71,7 +71,7 @@ int queue_append(queue_t **queue, queue_t *elem)
         return -3;
     }
     // Se a fila estava vazia
-    if (*queue = NULL)
+    if (*queue == NULL)
     {
         *queue = elem;
         (*queue)->next = elem;
