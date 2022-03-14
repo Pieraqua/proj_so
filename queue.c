@@ -33,7 +33,7 @@ void queue_print(char *name, queue_t *queue, void print_elem(void *))
     queue_t *atual = queue;
     if (queue == NULL)
     {
-        fprintf(stderr, "### Erro: tentou ler uma fila vazia");
+        fprintf(stderr, "### Erro: tentou ler uma fila vazia\n");
         return;
     }
 
@@ -57,17 +57,17 @@ int queue_append(queue_t **queue, queue_t *elem)
     queue_t *primeiro, *ultimo;
     if (queue == NULL)
     {
-        fprintf(stderr, "### Erro: tentou ler uma fila não existe");
+        fprintf(stderr, "### Erro: tentou ler uma fila não existe\n");
         return -1;
     }
     if (elem == NULL)
     {
-        fprintf(stderr, "### Erro: tentou adicionar um elemento que não existe");
+        fprintf(stderr, "### Erro: tentou adicionar um elemento que não existe\n");
         return -2;
     }
     if ((elem->next != NULL) || (elem->prev != NULL))
     {
-        fprintf(stderr, "### Erro: tentou adicionar um elemento que já está em outra fila");
+        fprintf(stderr, "### Erro: tentou adicionar um elemento que já está em outra fila\n");
         return -3;
     }
     // Se a fila estava vazia
@@ -101,17 +101,17 @@ int queue_remove(queue_t **queue, queue_t *elem)
     queue_t *atual, *inicial;
     if (queue == NULL)
     {
-        fprintf(stderr, "### Erro: tentou ler uma fila não existe");
+        fprintf(stderr, "### Erro: tentou ler uma fila não existe\n");
         return -1;
     }
     if (*queue == NULL)
     {
-        fprintf(stderr, "### Erro: tentou ler uma fila vazia");
+        fprintf(stderr, "### Erro: tentou ler uma fila vazia\n");
         return -2;
     }
     if (elem == NULL)
     {
-        fprintf(stderr, "### Erro: tentou adicionar um elemento que não existe");
+        fprintf(stderr, "### Erro: tentou adicionar um elemento que não existe\n");
         return -3;
     }
     inicial = *queue;
@@ -137,12 +137,12 @@ int queue_remove(queue_t **queue, queue_t *elem)
         atual = atual->next;
         if (atual == NULL)
         {
-            fprintf(stderr, "### Erro: A fila não está bem formada");
+            fprintf(stderr, "### Erro: A fila não está bem formada\n");
             return -4;
         }
         if (atual == inicial)
         {
-            fprintf(stderr, "### Erro: O elemento não pertence a fila");
+            fprintf(stderr, "### Erro: O elemento não pertence a fila\n");
             return -5;
         }
     }
