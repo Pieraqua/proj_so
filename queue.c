@@ -128,10 +128,15 @@ int queue_remove(queue_t **queue, queue_t *elem)
     while (atual->next != elem)
     {
         atual = atual->next;
+        if (atual == NULL)
+        {
+            fprintf(stderr, "### Erro: A fila não está bem formada");
+            return -4;
+        }
         if (atual == inicial)
         {
             fprintf(stderr, "### Erro: O elemento não pertence a fila");
-            return -4;
+            return -5;
         }
     }
     (elem->prev)->next = (elem->next);
