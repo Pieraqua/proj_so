@@ -123,6 +123,13 @@ int queue_remove(queue_t **queue, queue_t *elem)
             (*queue)->prev = NULL;
             return 0;
         }
+        (*queue) = elem->next;
+        (elem->prev)->next = (elem->next);
+        (elem->next)->prev = (elem->prev);
+        elem->prev = NULL;
+        elem->next = NULL;
+        elem = NULL;
+        return 0;
     }
     atual = inicial;
     while (atual->next != elem)
