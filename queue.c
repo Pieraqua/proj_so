@@ -114,8 +114,7 @@ int queue_remove(queue_t **queue, queue_t *elem)
         fprintf(stderr, "### Erro: tentou adicionar um elemento que não existe");
         return -3;
     }
-    atual = *queue;
-    inicial = atual;
+    inicial = *queue;
     if (inicial == elem)
     {
         if (inicial->next == elem)
@@ -124,16 +123,8 @@ int queue_remove(queue_t **queue, queue_t *elem)
             (*queue)->prev = NULL;
             return 0;
         }
-        else
-        {
-            (elem->prev)->next = (elem->next);
-            (elem->next)->prev = (elem->prev);
-            elem->prev = NULL;
-            elem->next = NULL;
-            elem = NULL;
-            return 0;
-        }
     }
+    atual = inicial;
     while (atual->next != elem)
     {
         atual = atual->next;
