@@ -1,4 +1,5 @@
 // Mariana Gomes Paulo Sérgio Ávila Júnior
+#include <stdio.h>
 #include "queue.h"
 //------------------------------------------------------------------------------
 // Conta o numero de elementos na fila
@@ -69,7 +70,14 @@ int queue_append(queue_t **queue, queue_t *elem)
         fprintf(stderr, "### Erro: tentou adicionar um elemento que já está em outra fila");
         return -3;
     }
-
+    // Se a fila estava vazia
+    if (*queue = NULL)
+    {
+        *queue = elem;
+        *queue->next = elem;
+        *queue->prev = elem;
+        return 0;
+    }
     primeiro = (*queue);
     ultimo = primeiro->prev;
     ultimo->next = elem;
@@ -106,20 +114,33 @@ int queue_remove(queue_t **queue, queue_t *elem)
         fprintf(stderr, "### Erro: tentou adicionar um elemento que não existe");
         return;
     }
-    if ((elem->next != NULL) || (elem->prev != NULL))
-    {
-        fprintf(stderr, "### Erro: tentou adicionar um elemento que já está em outra fila");
-        return;
-    }
     atual = *queue;
     inicial = atual;
+    if (inicial == elem)
+    {
+        if (inicial->next == elem)
+        {
+            *queue->next = NULL;
+            *queue->prev = NULL;
+            return 0;
+        }
+        else
+        {
+            (elem->prev)->next = (elem->next);
+            (elem->next)->prev = (elem->prev);
+            elem->prev = NULL;
+            elem->next = NULL;
+            elem = NULL;
+            return 0;
+        }
+    }
     while (atual->next != elem)
     {
         atual = atual->next;
-        if (atual = inicial)
+        if (atual == inicial)
         {
             fprintf(stderr, "### Erro: O elemento não pertence a fila");
-            return;
+            return -4;
         }
     }
     (elem->prev)->next = (elem->next);
@@ -127,4 +148,5 @@ int queue_remove(queue_t **queue, queue_t *elem)
     elem->prev = NULL;
     elem->next = NULL;
     elem = NULL;
+    return 0;
 }
