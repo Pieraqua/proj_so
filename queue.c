@@ -121,8 +121,8 @@ int queue_remove(queue_t **queue, queue_t *elem)
         {
             (*queue)->next = NULL;
             (*queue)->prev = NULL;
-            return 0;
             (*queue) = NULL;
+            return 0;
         }
         (*queue) = elem->next;
         (elem->prev)->next = (elem->next);
