@@ -122,13 +122,13 @@ int queue_remove(queue_t **queue, queue_t *elem)
             (*queue)->next = NULL;
             (*queue)->prev = NULL;
             return 0;
+            (*queue) = NULL;
         }
         (*queue) = elem->next;
         (elem->prev)->next = (elem->next);
         (elem->next)->prev = (elem->prev);
         elem->prev = NULL;
         elem->next = NULL;
-        elem = NULL;
         return 0;
     }
     atual = inicial;
@@ -150,6 +150,5 @@ int queue_remove(queue_t **queue, queue_t *elem)
     (elem->next)->prev = (elem->prev);
     elem->prev = NULL;
     elem->next = NULL;
-    elem = NULL;
     return 0;
 }
