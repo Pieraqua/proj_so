@@ -36,14 +36,14 @@ void queue_print(char *name, queue_t *queue, void print_elem(void *))
         fprintf(stderr, "### Erro: tentou ler uma fila vazia\n");
         return;
     }
-    print("%s [", name);
+    printf("%s [", name);
     do
     {
         print_elem(atual);
-        print(" ");
+        printf(" ");
         atual = atual->next;
     } while (atual != queue);
-    print("] \n")
+    printf("] \n")
 }
 
 //------------------------------------------------------------------------------
