@@ -1,4 +1,4 @@
-// Mariana Gomes Paulo Sérgio Ávila Júnior
+// Mariana Gomes da Luz & Paulo Sérgio Ávila Júnior
 #include <stdio.h>
 #include "queue.h"
 //------------------------------------------------------------------------------
@@ -33,9 +33,10 @@ void queue_print(char *name, queue_t *queue, void print_elem(void *))
     queue_t *atual = queue;
     printf("%s: [", name);
 
-    if(queue == NULL){
-	printf("]\n");
-	return;
+    if (queue == NULL)
+    {
+        printf("]\n");
+        return;
     }
 
     do
