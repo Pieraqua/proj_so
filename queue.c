@@ -73,9 +73,9 @@ int queue_append(queue_t **queue, queue_t *elem)
     // Se a fila estava vazia
     if (*queue = NULL)
     {
-        *queue = elem;
-        *queue->next = elem;
-        *queue->prev = elem;
+        queue = elem;
+        (*queue)->next = elem;
+        (*queue)->prev = elem;
         return 0;
     }
     primeiro = (*queue);
@@ -120,8 +120,8 @@ int queue_remove(queue_t **queue, queue_t *elem)
     {
         if (inicial->next == elem)
         {
-            *queue->next = NULL;
-            *queue->prev = NULL;
+            (*queue)->next = NULL;
+            (*queue)->prev = NULL;
             return 0;
         }
         else
