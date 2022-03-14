@@ -102,17 +102,17 @@ int queue_remove(queue_t **queue, queue_t *elem)
     if (queue == NULL)
     {
         fprintf(stderr, "### Erro: tentou ler uma fila não existe");
-        return;
+        return -1;
     }
     if (*queue == NULL)
     {
         fprintf(stderr, "### Erro: tentou ler uma fila vazia");
-        return;
+        return -2;
     }
     if (elem == NULL)
     {
         fprintf(stderr, "### Erro: tentou adicionar um elemento que não existe");
-        return;
+        return -3;
     }
     atual = *queue;
     inicial = atual;
