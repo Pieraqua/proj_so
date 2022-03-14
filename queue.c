@@ -73,7 +73,7 @@ int queue_append(queue_t **queue, queue_t *elem)
     // Se a fila estava vazia
     if (*queue = NULL)
     {
-        queue = elem;
+        *queue = elem;
         (*queue)->next = elem;
         (*queue)->prev = elem;
         return 0;
