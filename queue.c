@@ -31,19 +31,21 @@ int queue_size(queue_t *queue)
 void queue_print(char *name, queue_t *queue, void print_elem(void *))
 {
     queue_t *atual = queue;
-    if (queue == NULL)
-    {
-        fprintf(stderr, "### Erro: tentou ler uma fila vazia\n");
-        return;
+    printf("%s: [", name);
+
+    if(queue == NULL){
+	printf("]\n");
+	return;
     }
-    printf("%s [", name);
+
     do
     {
         print_elem(atual);
         printf(" ");
         atual = atual->next;
-    } while (atual != queue);
-    printf("] \n")
+    } while (atual->next != queue);
+    print_elem(atual);
+    printf("] \n");
 }
 
 //------------------------------------------------------------------------------
