@@ -6,5 +6,6 @@
 
 #include <stdio.h>
 #include "queue.h"
+#include <ucontext.h>
 
 #endif
