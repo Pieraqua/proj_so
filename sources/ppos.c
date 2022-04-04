@@ -27,7 +27,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
         return -1;
     }
 
-    filaTarefas *atual = filaTarefas->next; // atual, recebe a task do elemento de fila atual
+    task_t *atual = filaTarefas->next; // atual, recebe a task do elemento de fila atual
     int maiorId = filaTarefas->id;     // maiorId vai servir para definir o proximo id a ser usado,
 
     while (atual->next != primeiraTask) // Acha a maior task->id de todos os elementos de fila
@@ -38,14 +38,14 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
         }
         atual = atual->next;
     }
-    task->id = maiorId + 1;                                    // define a id da task
-    task->status = 0;                              // Define o status da task a ser criada como Pronta
-    getcontext(&(task->context));                  // Copia o contexto atual e copia para contextoTask
-    task->context->uc_stack.ss_flags = 0;          // Deixa como zero a máscara das flags
-    task->context->uc_link = 0;                    // Quando a task terminar ela não tem para onde voltar, então deixa como 0
+    task->id = maiorId + 1;                                       // define a id da task
+    task->status = 0;                                             // Define o status da task a ser criada como Pronta
+    getcontext(&(task->context));                                 // Copia o contexto atual e copia para contextoTask
+    task->context.uc_stack.ss_flags = 0;                          // Deixa como zero a máscara das flags
+    task->context.uc_link = 0;                                    // Quando a task terminar ela não tem para onde voltar, então deixa como 0
     makecontext(&(task->context), start_routine, 1, (char *)arg); // Cria o contexto da task no endereço do contextoTask
     // Define o contexto da task no elemento de fila como o contextoTask
-    task->preemptable = 0;                         // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
+    task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
 
     queue_append((&filaTarefas), task);
 }
@@ -53,61 +53,67 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 //Muda para outra tarefa, transfere o processador para a tarefa indicada.
 int task_switch(task_t *task)
 {
-	task_t *proxima = filaTarefas, *atual = filaTarefas;		
-	if (atual == NULL)
-    	{
-        	fprintf(stderr, "Fila vazia?\n");
-        	return -3;
-    	}
-    	for(;;)
-    	{
-		proxima = proxima->next;
-		if(proxima == NULL){
-	       		fprintf(stderr, "Elemento nulo detectado - task_switch\n");
-			return -1;
-		}
-		if(proxima == filaTarefas){
-			fprintf(stderr, "Tarefa nao encontrada - task_switch\n");
-			return -2;
-		}
-		if(proxima == task) break;
-    	}
-	/* Setamos a tarefa a ser trocada como a tarefa ativa */
-	filaTarefas = proxima;
-	/* E trocamos de contexto, salvando o contexto atual */
-	swapcontext(&(atual->context), &(proxima->context));
-	/* Retorno com sucesso */
-	return 0;
+    task_t *proxima = filaTarefas, *atual = filaTarefas;
+    if (atual == NULL)
+    {
+        fprintf(stderr, "Fila vazia?\n");
+        return -3;
+    }
+    for (;;)
+    {
+        proxima = proxima->next;
+        if (proxima == NULL)
+        {
+            fprintf(stderr, "Elemento nulo detectado - task_switch\n");
+            return -1;
+        }
+        if (proxima == filaTarefas)
+        {
+            fprintf(stderr, "Tarefa nao encontrada - task_switch\n");
+            return -2;
+        }
+        if (proxima == task)
+            break;
+    }
+    /* Setamos a tarefa a ser trocada como a tarefa ativa */
+    filaTarefas = proxima;
+    /* E trocamos de contexto, salvando o contexto atual */
+    swapcontext(&(atual->context), &(proxima->context));
+    /* Retorno com sucesso */
+    return 0;
 }
 
 // Termina a tarefa e volta para a tarefa 'main'.
 //      - Deve ser usado a função swap_task para voltar para o main
 void task_exit(int exit_code)
 {
-	task_t *atual = filaTarefas, *proxima = filaTarefas;
- 	if (filaTarefas == NULL)
-    	{
-        	fprintf(stderr, "Fila vazia?\n");
-        	return -3;
-    	}   
-	for(;;)
-    	{
-		proxima = proxima->next;
-		if(proxima == NULL){
-	       		fprintf(stderr, "Elemento nulo detectado - task_switch\n");
-			return -1;
-		}
-		if(proxima == filaTarefas){
-			fprintf(stderr, "Main nao encontrada - task_switch\n");
-			return -2;
-		}
-		/* Se encontrou a main, break */
-		if(proxima->id == 0) break;
-    	}
-	/* Removemos a tarefa e desalocamos */
-	queue_remove(&filaTarefas, atual);
-   	/* Trocamos para a main */
-   	if (swap_task(proxima) < 0)
+    task_t *atual = filaTarefas, *proxima = filaTarefas;
+    if (filaTarefas == NULL)
+    {
+        fprintf(stderr, "Fila vazia?\n");
+        return -3;
+    }
+    for (;;)
+    {
+        proxima = proxima->next;
+        if (proxima == NULL)
+        {
+            fprintf(stderr, "Elemento nulo detectado - task_switch\n");
+            return -1;
+        }
+        if (proxima == filaTarefas)
+        {
+            fprintf(stderr, "Main nao encontrada - task_switch\n");
+            return -2;
+        }
+        /* Se encontrou a main, break */
+        if (proxima->id == 0)
+            break;
+    }
+    /* Removemos a tarefa e desalocamos */
+    queue_remove(&filaTarefas, atual);
+    /* Trocamos para a main */
+    if (swap_task(proxima) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
 }
 
