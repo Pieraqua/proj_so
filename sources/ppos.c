@@ -1,20 +1,36 @@
 #include "ppos.h"
 #include "ppos_core.h"
+#define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 
 task_t *filaTarefas;
 task_t mainTask;
 // Inicializar as variáveis e o buffer do printf
 void ppos_init()
 {
+    char *stack;
+
     //Inicialização das variáveis
     filaTarefas = NULL;
+    mainTask.next = NULL;
+    mainTask.prev = NULL;
 
-    mainTask.id = 0;                        // define a id da task
-    mainTask.status = 0;                    // Define o status da task a ser criada como Pronta
-    getcontext(&(mainTask.context));        // Copia o contexto atual e copia para contextoTask
-    mainTask.context.uc_stack.ss_flags = 0; // Deixa como zero a máscara das flags
-    mainTask.context.uc_link = 0;           // Quando a task terminar ela não tem para onde voltar, então deixa como 0
-    mainTask.preemptable = 0;               // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
+    mainTask.id = 0;                 // define a id da task
+    mainTask.status = 0;             // Define o status da task a ser criada como Pronta
+    getcontext(&(mainTask.context)); // Copia o contexto atual e copia para contextoTask
+    stack = malloc(STACKSIZE);
+    if (stack)
+    {
+        mainTask.context.uc_stack.ss_sp = stack;
+        mainTask.context.uc_stack.ss_size = STACKSIZE;
+        mainTask.context.uc_stack.ss_flags = 0; // Deixa como zero a máscara das flags
+        mainTask.context.uc_link = 0;           // Quando a task terminar ela não tem para onde voltar, então deixa como 0
+    }
+    else
+    {
+        perror("Erro na criação da pilha: ");
+        exit(1);
+    }
+    mainTask.preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
 
     queue_append((queue_t **)(&filaTarefas), ((queue_t *)(&mainTask)));
     //Inicilização do buffer do printf
@@ -25,6 +41,8 @@ void ppos_init()
 //      - Um descritor de tarefa aponta para o programa principal
 int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 {
+    char *stack;
+
     int maiorId = 0;
     //if(ID==MAXINT)
     task_t *primeiraTask = filaTarefas;
@@ -42,16 +60,32 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
             atual = atual->next;
         }
     }
-    task->id = maiorId + 1;                                                       // define a id da task
-    task->status = 0;                                                             // Define o status da task a ser criada como Pronta
-    getcontext(&(task->context));                                                 // Copia o contexto atual e copia para contextoTask
-    task->context.uc_stack.ss_flags = 0;                                          // Deixa como zero a máscara das flags
-    task->context.uc_link = 0;                                                    // Quando a task terminar ela não tem para onde voltar, então deixa como 0
+    task->id = maiorId + 1;       // define a id da task
+    task->status = 0;             // Define o status da task a ser criada como Pronta
+    getcontext(&(task->context)); // Copia o contexto atual e copia para contextoTask
+    stack = malloc(STACKSIZE);
+    if (stack)
+    {
+        task->context.uc_stack.ss_sp = stack;
+        task->context.uc_stack.ss_size = STACKSIZE;
+        task->context.uc_stack.ss_flags = 0; // Deixa como zero a máscara das flags
+        task->context.uc_link = 0;           // Quando a task terminar ela não tem para onde voltar, então deixa como 0
+    }
+    else
+    {
+        perror("Erro na criação da pilha: ");
+        exit(1);
+    }
+    task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
+
+    task->next = NULL;
+    task->prev = NULL;
+    // Quando a task terminar ela não tem para onde voltar, então deixa como 0
     makecontext(&(task->context), (void (*)(void))start_routine, 1, (char *)arg); // Cria o contexto da task no endereço do contextoTask
     // Define o contexto da task no elemento de fila como o contextoTask
     task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
 
-    queue_append((queue_t **)(&filaTarefas), ((queue_t *)(&task)));
+    queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
     return 0;
 }
 
@@ -113,6 +147,8 @@ void task_exit(int exit_code)
             break;
     }
     /* Removemos a tarefa e desalocamos */
+    if (filaTarefas->id != 0)
+        free((filaTarefas->context.uc_stack.ss_sp));
     queue_remove((queue_t **)&filaTarefas, ((queue_t *)(&atual)));
     /* Trocamos para a main */
     if (task_switch(proxima) < 0)
