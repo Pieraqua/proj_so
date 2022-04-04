@@ -53,9 +53,12 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 //Muda para outra tarefa, transfere o processador para a tarefa indicada.
 int task_switch(task_t *task)
 {
-
 	task_t *proxima = filaTarefas, *atual = filaTarefas;		
-
+	if (atual == NULL)
+    	{
+        	fprintf(stderr, "Fila vazia?\n");
+        	return -3;
+    	}
     	for(;;)
     	{
 		proxima = proxima->next;
@@ -82,7 +85,12 @@ int task_switch(task_t *task)
 void task_exit(int exit_code)
 {
 	task_t *atual = filaTarefas, *proxima = filaTarefas;
-    	for(;;)
+ 	if (filaTarefas == NULL)
+    	{
+        	fprintf(stderr, "Fila vazia?\n");
+        	return -3;
+    	}   
+	for(;;)
     	{
 		proxima = proxima->next;
 		if(proxima == NULL){
@@ -98,10 +106,9 @@ void task_exit(int exit_code)
     	}
 	/* Removemos a tarefa e desalocamos */
 	queue_remove(&filaTarefas, atual);
-//	free(atual); - memory leak?
-
-	/* Trocamos para a main */
-	if(swap_task(proxima) < 0) fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
+   	/* Trocamos para a main */
+   	if (swap_task(proxima) < 0)
+        fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
 }
 
 // Retorna o identificador da tarefa atual.
@@ -109,5 +116,5 @@ void task_exit(int exit_code)
 //      - Não podem existir duas tarefas com o mesmo nome
 int task_id()
 {
-	return filaTarefas->id;
+    return filaTarefas->id;
 }
