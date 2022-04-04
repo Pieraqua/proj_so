@@ -113,7 +113,7 @@ void task_exit(int exit_code)
     /* Removemos a tarefa e desalocamos */
     queue_remove(&filaTarefas, atual);
     /* Trocamos para a main */
-    if (swap_task(proxima) < 0)
+    if (task_switch(proxima) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
 }
 

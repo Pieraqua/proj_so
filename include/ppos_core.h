@@ -5,6 +5,6 @@
 #define __PPOS_CORE_H
 
 #include <stdio.h>
-
+#include "queue.h"
 
 #endif
