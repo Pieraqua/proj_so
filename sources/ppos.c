@@ -151,7 +151,7 @@ void task_exit(int exit_code)
         free((filaTarefas->context.uc_stack.ss_sp));
     queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
     /* Trocamos para a main */
-    if (task_switch(proxima) < 0)
+    if (task_switch(&mainTask) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
 }
 
