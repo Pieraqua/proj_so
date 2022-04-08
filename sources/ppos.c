@@ -149,7 +149,7 @@ void task_exit(int exit_code)
     /* Removemos a tarefa e desalocamos */
     if (filaTarefas->id != 0)
         free((filaTarefas->context.uc_stack.ss_sp));
-    queue_remove((queue_t **)&filaTarefas, ((queue_t *)(&atual)));
+    queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
     /* Trocamos para a main */
     if (task_switch(proxima) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
