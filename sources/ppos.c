@@ -118,10 +118,11 @@ int task_switch(task_t *task)
         if (proxima == task)
             break;
     }
+    printf("task_switch: trocando contexto %i -> %i", atual->id, proxima->id);
+
     /* Setamos a tarefa a ser trocada como a tarefa ativa */
     tarefaAtual = proxima;
     /* E trocamos de contexto, salvando o contexto atual */
-    printf("task_switch: trocando contexto %i -> %i", filaTarefas->id, task->id);
 
     swapcontext(&(atual->context), &(proxima->context));
     /* Retorno com sucesso */
@@ -138,27 +139,13 @@ void task_exit(int exit_code)
     {
         fprintf(stderr, "Fila vazia? - task_exit\n");
     }
-    for (;;)
-    {
-        proxima = proxima->next;
-        if (proxima == NULL)
-        {
-            fprintf(stderr, "Elemento nulo detectado - task_exit\n");
-        }
-        if (proxima == filaTarefas)
-        {
-            fprintf(stderr, "Main nao encontrada - task_exit\n");
-        }
-        /* Se encontrou a main, break */
-        if (proxima->id == 0)
-            break;
-    }
+    
     /* Removemos a tarefa e desalocamos */
-    if (filaTarefas->id != 0)
-        free((filaTarefas->context.uc_stack.ss_sp));
+    //if (atual->id != 0)
+    //   free((atual->context.uc_stack.ss_sp));
     queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
     /* Trocamos para a main */
-    printf("task_exit: tarefa %i sendo encerrada", filaTarefas->id);
+    printf("task_exit: tarefa %i sendo encerrada", atual->id);
     if (task_switch(&mainTask) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
 }
