@@ -68,15 +68,14 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     {
         task->context.uc_stack.ss_sp = stack;
         task->context.uc_stack.ss_size = STACKSIZE;
-        task->context.uc_stack.ss_flags = 0; // Deixa como zero a máscara das flags
-        task->context.uc_link = 0;           // Quando a task terminar ela volta para o main
+        task->context.uc_stack.ss_flags = 0;         // Deixa como zero a máscara das flags
+        task->context.uc_link = &(mainTask.context); // Quando a task terminar ela não tem para onde voltar, então deixa como 0
     }
     else
     {
         perror("Erro na criação da pilha: ");
         exit(1);
     }
-    
     task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
 
     task->next = NULL;
@@ -87,6 +86,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
 
     queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
+    printf("task_create: criou tarefa %i", task->id);
     return task->id;
 }
 
@@ -118,8 +118,11 @@ int task_switch(task_t *task)
     /* Setamos a tarefa a ser trocada como a tarefa ativa */
     filaTarefas = proxima;
     /* E trocamos de contexto, salvando o contexto atual */
+    printf("task_switch: trocando contexto %i -> %i", filaTarefas->id, task->id);
+
     swapcontext(&(atual->context), &(proxima->context));
     /* Retorno com sucesso */
+
     return 0;
 }
 
@@ -127,12 +130,11 @@ int task_switch(task_t *task)
 //      - Deve ser usado a função swap_task para voltar para o main
 void task_exit(int exit_code)
 {
-    task_t *atual = filaTarefas;//, *proxima = filaTarefas;
+    task_t *atual = filaTarefas, *proxima = filaTarefas;
     if (filaTarefas == NULL)
     {
         fprintf(stderr, "Fila vazia? - task_exit\n");
     }
-    /*
     for (;;)
     {
         proxima = proxima->next;
@@ -145,14 +147,15 @@ void task_exit(int exit_code)
             fprintf(stderr, "Main nao encontrada - task_exit\n");
         }
         /* Se encontrou a main, break */
-        /*if (proxima->id == 0)
+        if (proxima->id == 0)
             break;
-    }*/
+    }
     /* Removemos a tarefa e desalocamos */
-    //if (filaTarefas->id != 0)
-    //    free((filaTarefas->context.uc_stack.ss_sp));
+    if (filaTarefas->id != 0)
+        free((filaTarefas->context.uc_stack.ss_sp));
     queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
     /* Trocamos para a main */
+    printf("task_exit: tarefa %i sendo encerrada", filaTarefas->id);
     if (task_switch(&mainTask) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
 }
