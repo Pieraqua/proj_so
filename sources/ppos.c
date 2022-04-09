@@ -5,6 +5,7 @@
 task_t *filaTarefas;
 task_t *tarefaAtual;
 task_t mainTask;
+int maiorId = 0;
 // Inicializar as variáveis e o buffer do printf
 void ppos_init()
 {
@@ -43,25 +44,9 @@ void ppos_init()
 int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 {
     char *stack;
-
-    int maiorId = 0;
     //if(ID==MAXINT)
-    task_t *primeiraTask = filaTarefas;
-    if (filaTarefas != NULL)
-    {
-        task_t *atual = filaTarefas->next; // atual, recebe a task do elemento de fila atual
-        maiorId = filaTarefas->id;         // maiorId vai servir para definir o proximo id a ser usado,
-
-        while (atual != primeiraTask) // Acha a maior task->id de todos os elementos de fila
-        {
-            if (atual->id > maiorId)
-            {
-                maiorId = atual->id;
-            }
-            atual = atual->next;
-        }
-    }
-    task->id = maiorId + 1;       // define a id da task
+    maiorId++;
+    task->id = maiorId;           // define a id da task
     task->status = 0;             // Define o status da task a ser criada como Pronta
     getcontext(&(task->context)); // Copia o contexto atual e copia para contextoTask
     stack = malloc(STACKSIZE);
@@ -139,7 +124,7 @@ void task_exit(int exit_code)
     {
         fprintf(stderr, "Fila vazia? - task_exit\n");
     }
-    
+
     /* Removemos a tarefa e desalocamos */
     //if (atual->id != 0)
     //   free((atual->context.uc_stack.ss_sp));
