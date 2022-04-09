@@ -3,6 +3,7 @@
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 
 task_t *filaTarefas;
+task_t *tarefaAtual;
 task_t mainTask;
 // Inicializar as variáveis e o buffer do printf
 void ppos_init()
@@ -31,7 +32,7 @@ void ppos_init()
         exit(1);
     }
     mainTask.preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
-
+    tarefaAtual = &mainTask;
     queue_append((queue_t **)(&filaTarefas), ((queue_t *)(&mainTask)));
     //Inicilização do buffer do printf
     setvbuf(stdout, 0, _IONBF, 0);
@@ -69,7 +70,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
         task->context.uc_stack.ss_sp = stack;
         task->context.uc_stack.ss_size = STACKSIZE;
         task->context.uc_stack.ss_flags = 0; // Deixa como zero a máscara das flags
-        task->context.uc_link = 0;           // Quando a task terminar ela volta para o main
+        task->context.uc_link = &mainTask.context;           // Quando a task terminar ela volta para o main
     }
     else
     {
@@ -93,7 +94,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 //Muda para outra tarefa, transfere o processador para a tarefa indicada.
 int task_switch(task_t *task)
 {
-    task_t *proxima = filaTarefas, *atual = filaTarefas;
+    task_t *proxima = filaTarefas, *atual = tarefaAtual;
     if (atual == NULL)
     {
         fprintf(stderr, "Fila vazia?\n");
@@ -101,8 +102,10 @@ int task_switch(task_t *task)
     }
     for (;;)
     {
-        proxima = proxima->next;
-        if (proxima == NULL)
+	proxima = proxima->next;
+        if (proxima == task)
+            break;
+	if (proxima == NULL)
         {
             fprintf(stderr, "Elemento nulo detectado - task_switch\n");
             return -1;
@@ -116,7 +119,7 @@ int task_switch(task_t *task)
             break;
     }
     /* Setamos a tarefa a ser trocada como a tarefa ativa */
-    filaTarefas = proxima;
+    tarefaAtual = proxima;
     /* E trocamos de contexto, salvando o contexto atual */
     swapcontext(&(atual->context), &(proxima->context));
     /* Retorno com sucesso */
@@ -127,7 +130,7 @@ int task_switch(task_t *task)
 //      - Deve ser usado a função swap_task para voltar para o main
 void task_exit(int exit_code)
 {
-    task_t *atual = filaTarefas;//, *proxima = filaTarefas;
+    task_t *atual = tarefaAtual;//, *proxima = filaTarefas;
     if (filaTarefas == NULL)
     {
         fprintf(stderr, "Fila vazia? - task_exit\n");
