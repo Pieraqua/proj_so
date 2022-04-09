@@ -52,7 +52,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
         task_t *atual = filaTarefas->next; // atual, recebe a task do elemento de fila atual
         maiorId = filaTarefas->id;         // maiorId vai servir para definir o proximo id a ser usado,
 
-        while (atual->next != primeiraTask) // Acha a maior task->id de todos os elementos de fila
+        while (atual != primeiraTask) // Acha a maior task->id de todos os elementos de fila
         {
             if (atual->id > maiorId)
             {
@@ -155,5 +155,5 @@ void task_exit(int exit_code)
 //      - Não podem existir duas tarefas com o mesmo nome
 int task_id()
 {
-    return filaTarefas->id;
+    return tarefaAtual->id;
 }
