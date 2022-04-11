@@ -249,7 +249,7 @@ void task_yield()
 static task_t *scheduler()
 {
     task_t *escolhida = filaProntas;
-    task_t *contador = filaProntas;
+    task_t *contador;
     //Scheaduler ainda não foi rodado se tarefaPrevia==NULL
     if (tarefaPrevia != NULL)
     {
@@ -288,7 +288,7 @@ void task_setprio(task_t *task, int prio)
         tarefaAtual->prioEstatica = prio;
         return;
     }
-    task->prioEstatica = task->prioEstatica;
+    task->prioEstatica = prio;
 }
 
 int task_getprio(task_t *task)
