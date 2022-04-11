@@ -100,6 +100,8 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     printf("task_create: criou tarefa %i\n", task->id);
 #endif
     taskCont = taskCont + 1;
+    task->prioDinamica = 0;
+    task->prioEstatica = 0;
     return task->id;
 }
 
@@ -223,3 +225,32 @@ static task_t *scheduler()
 {
     return filaProntas;
 }
+
+/*
+static task_t *scheduler()
+{   
+    
+
+    return filaProntas;
+}
+
+void task_setprio(task_t *task, int prio)
+{
+    if(task==NULL)
+    {
+        filaAtual->prioEstatica=prio;
+        return;
+    }
+    task->prio=prio;
+}
+
+int task_getprio(task_t *task)
+{
+    if(task==NULL)
+    {
+        return=filaAtual->prioEstatica;
+    }
+    task->prio=prio;
+}
+
+*/
