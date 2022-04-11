@@ -163,7 +163,6 @@ int task_id()
     return tarefaAtual->id;
 }
 
-<<<<<<< HEAD
 // Corpo da Tarefa Dispatcher
 //  -Passa o controle para a tarefa da vez
 void dispatcher()
@@ -179,15 +178,19 @@ void dispatcher()
             {
             case PRONTA:
                 //roda fila
-                /* code */
+                filaProntas = filaProntas->next;
                 break;
             case TERMINADA:
                 //tira da fila
-                /* code */
+                //   free((atual->context.uc_stack.ss_sp));
+                // sai da fila de prontas
+                queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
+                queue_remove((queue_t **)&filaTarefas, ((queue_t *)(proxima)));
                 break;
             case SUSPENSA:
+                /* Removemos a tarefa e desalocamos */
                 //sai da fila de prontas
-                /* code */
+                queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
                 break;
             }
         }
@@ -201,9 +204,7 @@ void dispatcher()
 task_yield()
 {
 }
-=======
-static task_t* scheduler()
+static task_t *scheduler()
 {
-	return filaProntas;
+    return filaProntas;
 }
->>>>>>> 7a0b7c9abc548a1880ff64daf6e819dc358ada09
