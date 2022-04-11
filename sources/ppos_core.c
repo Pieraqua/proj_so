@@ -55,7 +55,7 @@ void ppos_init()
     queue_append((queue_t **)(&filaTarefas), (queue_t *)(&mainTask));
 
     task_create(&dispatcherTask, dispatcher, 0);
-    dispatcherTask.status = 0;
+    dispatcherTask.status = PRONTA;
     queue_remove((queue_t **)(&filaTarefas), (queue_t *)(&dispatcherTask));
 
     //Inicilização do buffer do printf
