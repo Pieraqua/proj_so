@@ -23,6 +23,7 @@ int taskCont = 1;
 
 /* Declaracao de funcoes */
 static void dispatcher();
+static task_t *scheduler();
 
 // Inicializar as variáveis e o buffer do printf
 void ppos_init()
@@ -177,7 +178,7 @@ int task_id()
 
 // Corpo da Tarefa Dispatcher
 //  -Passa o controle para a tarefa da vez
-void dispatcher()
+static void dispatcher()
 {
     task_t *proxima;
     while (taskCont > 0)
@@ -197,11 +198,12 @@ void dispatcher()
                 /* code */
 		queue_remove((queue_t **)&filaTarefas, ((queue_t *)(proxima)));
 		queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
-                
+               
+		free((proxima->context.uc_stack.ss_sp));
+
 		taskCont = taskCont - 1;
                 break;
             case SUSPENSA:
-                /* Removemos a tarefa e desalocamos */
                 //sai da fila de prontas
                 queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
                 break;
