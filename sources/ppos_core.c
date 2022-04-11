@@ -7,9 +7,15 @@
 #define TERMINADA 1
 #define SUSPENSA 2
 
+/* Fila que contem todas as tarefas */
 task_t *filaTarefas;
+/* Ponteiro para a tarefa atualmente ativa */
 task_t *tarefaAtual;
+/* Fila que contem as tarefas atualmente prontas */
+task_t *filaProntas;
+/* Estrutura que contem as informacoes da tarefa main */
 task_t mainTask;
+/* Maior id criado ate agora */
 int maiorId = 0;
 int taskCont = 1;
 // Inicializar as variáveis e o buffer do printf
@@ -76,7 +82,8 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     makecontext(&(task->context), (void (*)(void))start_routine, 1, (char *)arg); // Cria o contexto da task no endereço do contextoTask
     // Define o contexto da task no elemento de fila como o contextoTask
     task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
-
+    /* Adiciona a tarefa para a fila de tarefas e a fila de tarefas prontas */
+    queue_append((queue_t **)(&filaProntas), (queue_t *)task);
     queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
 #ifdef PRINTDEBUG
     printf("task_create: criou tarefa %i\n", task->id);
@@ -156,6 +163,7 @@ int task_id()
     return tarefaAtual->id;
 }
 
+<<<<<<< HEAD
 // Corpo da Tarefa Dispatcher
 //  -Passa o controle para a tarefa da vez
 void dispatcher()
@@ -193,3 +201,9 @@ void dispatcher()
 task_yield()
 {
 }
+=======
+static task_t* scheduler()
+{
+	return filaProntas;
+}
+>>>>>>> 7a0b7c9abc548a1880ff64daf6e819dc358ada09
