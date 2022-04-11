@@ -19,7 +19,7 @@ task_t mainTask;
 task_t dispatcherTask;
 /* Maior id criado ate agora */
 int maiorId = 0;
-int taskCont = 1;
+int taskCont = 0;
 
 /* Declaracao de funcoes */
 static void dispatcher();
@@ -56,9 +56,14 @@ void ppos_init()
     queue_append((queue_t **)(&filaTarefas), (queue_t *)(&mainTask));
 
     task_create(&dispatcherTask, dispatcher, 0);
-    dispatcherTask.status = 0;
+    dispatcherTask.status = PRONTA;
 
-    //Inicilização do buffer do printf
+    queue_remove((queue_t **)&filaProntas, (queue_t *)&dispatcherTask);
+    queue_append((queue_t **)&filaTarefas, (queue_t *)&dispatcherTask);
+
+    taskCont = 0;
+
+    //Inicilização do buffer do rintf
     setvbuf(stdout, 0, _IONBF, 0);
 }
 
@@ -106,29 +111,37 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 //Muda para outra tarefa, transfere o processador para a tarefa indicada.
 int task_switch(task_t *task)
 {
-    task_t *proxima = filaProntas, *atual = tarefaAtual;
-    if (atual == NULL)
+    task_t *proxima = filaTarefas, *atual = tarefaAtual;
+ 
+    if(task != &dispatcherTask)
     {
-        fprintf(stderr, "Fila vazia?\n");
-        return -3;
+   	if (atual == NULL)
+    	{
+       		fprintf(stderr, "Fila vazia?\n");
+        	return -3;
+    	}
+    	for (;;)
+    	{
+        	proxima = proxima->next;
+        	if (proxima == task)
+            		break;
+        	if (proxima == NULL)
+        	{
+            		fprintf(stderr, "Elemento nulo detectado - task_switch\n");
+            		return -1;
+        	}
+        	if (proxima == filaTarefas)
+        	{
+            		fprintf(stderr, "Tarefa nao encontrada, suspensa? - task_switch\n");
+            		return -2;
+        	}
+        	if (proxima == task)
+            		break;
+    	}
     }
-    for (;;)
+    else
     {
-        proxima = proxima->next;
-        if (proxima == task)
-            break;
-        if (proxima == NULL)
-        {
-            fprintf(stderr, "Elemento nulo detectado - task_switch\n");
-            return -1;
-        }
-        if (proxima == filaProntas)
-        {
-            fprintf(stderr, "Tarefa nao encontrada, suspensa? - task_switch\n");
-            return -2;
-        }
-        if (proxima == task)
-            break;
+	proxima = &dispatcherTask;	
     }
 #ifdef PRINTDEBUG
     printf("task_switch: trocando contexto %i -> %i\n", atual->id, proxima->id);
@@ -136,7 +149,7 @@ int task_switch(task_t *task)
     /* Setamos a tarefa a ser trocada como a tarefa ativa */
     tarefaAtual = proxima;
     /* E trocamos de contexto, salvando o contexto atual */
-
+    
     swapcontext(&(atual->context), &(proxima->context));
     /* Retorno com sucesso */
 
@@ -192,6 +205,7 @@ static void dispatcher()
             {
             case PRONTA:
                 /* Poe no fim da fila de prontas */
+		queue_remove((queue_t **)&filaTarefas, (queue_t*)proxima);
 		queue_append((queue_t **)&filaProntas, (queue_t *)proxima);
 		break;
             case TERMINADA:
@@ -208,7 +222,7 @@ static void dispatcher()
             }
         }
     }
-    task_exit(0);
+    task_switch(&mainTask);
 }
 
 // Função task_yield
@@ -216,6 +230,7 @@ static void dispatcher()
 // Interessante usar o task_switch apontando para a tarefa Dipatcher
 void task_yield()
 {
+    tarefaAtual->status = PRONTA;
     task_switch(&dispatcherTask);
 }
 
