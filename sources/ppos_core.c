@@ -57,7 +57,6 @@ void ppos_init()
 
     task_create(&dispatcherTask, dispatcher, 0);
     dispatcherTask.status = 0;
-    queue_remove((queue_t **)(&filaTarefas), (queue_t *)(&dispatcherTask));
 
     //Inicilização do buffer do printf
     setvbuf(stdout, 0, _IONBF, 0);
@@ -94,9 +93,9 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     makecontext(&(task->context), (void (*)(void))start_routine, 1, (char *)arg); // Cria o contexto da task no endereço do contextoTask
     // Define o contexto da task no elemento de fila como o contextoTask
     task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
-    /* Adiciona a tarefa para a fila de tarefas e a fila de tarefas prontas */
+    /* Adiciona a tarefa para a fila de tarefas prontas */
     queue_append((queue_t **)(&filaProntas), (queue_t *)task);
-    queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
+    //queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
 #ifdef PRINTDEBUG
     printf("task_create: criou tarefa %i\n", task->id);
 #endif
@@ -107,7 +106,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 //Muda para outra tarefa, transfere o processador para a tarefa indicada.
 int task_switch(task_t *task)
 {
-    task_t *proxima = filaTarefas, *atual = tarefaAtual;
+    task_t *proxima = filaProntas, *atual = tarefaAtual;
     if (atual == NULL)
     {
         fprintf(stderr, "Fila vazia?\n");
@@ -123,9 +122,9 @@ int task_switch(task_t *task)
             fprintf(stderr, "Elemento nulo detectado - task_switch\n");
             return -1;
         }
-        if (proxima == filaTarefas)
+        if (proxima == filaProntas)
         {
-            fprintf(stderr, "Tarefa nao encontrada - task_switch\n");
+            fprintf(stderr, "Tarefa nao encontrada, suspensa? - task_switch\n");
             return -2;
         }
         if (proxima == task)
@@ -186,26 +185,25 @@ static void dispatcher()
         proxima = scheduler();
         if (proxima != NULL)
         {
+	    queue_remove((queue_t **)&filaProntas, (queue_t*)proxima);
+            queue_append((queue_t **)&filaTarefas, (queue_t*)proxima);
             task_switch(proxima);
             switch (proxima->status)
             {
             case PRONTA:
-                //roda fila
-                filaProntas = filaProntas->next;
-                break;
+                /* Poe no fim da fila de prontas */
+		queue_append((queue_t **)&filaProntas, (queue_t *)proxima);
+		break;
             case TERMINADA:
                 //tira da fila
                 /* code */
 		queue_remove((queue_t **)&filaTarefas, ((queue_t *)(proxima)));
-		queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
                
 		free((proxima->context.uc_stack.ss_sp));
 
 		taskCont = taskCont - 1;
                 break;
             case SUSPENSA:
-                //sai da fila de prontas
-                queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
                 break;
             }
         }

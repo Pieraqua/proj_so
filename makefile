@@ -26,7 +26,7 @@ LFLAGS =
 LIBS = -lm
 
 # define the C source files
-SRCS = sources/pingpong-tasks3.c sources/queue.c sources/ppos_core.c 
+SRCS = sources/pingpong-dispatcher.c sources/queue.c sources/ppos_core.c 
 
 # define the C object files 
 #
