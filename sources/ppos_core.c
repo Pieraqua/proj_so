@@ -229,8 +229,23 @@ static task_t *scheduler()
 /*
 static task_t *scheduler()
 {   
-    
+    task *previa=filaProntas;
+    task *escolhida;
+    if(previa==NULL)
+    {
+        return NULL;
+    }
+    previa->prioDinamico=prioEstatico;
+    if(previa->next==NULL)
+    {
+        
+    }
+    escolhida->priodinamica=escolhida->prioDinamica;
 
+
+    BubbleSort para a prioDinamica na filaProntas
+    
+    envelhece todas as tarefas que nao foram a que foi rodada previamente
     return filaProntas;
 }
 
@@ -238,17 +253,17 @@ void task_setprio(task_t *task, int prio)
 {
     if(task==NULL)
     {
-        filaAtual->prioEstatica=prio;
+        filaPronta->prioEstatica=prio;
         return;
     }
-    task->prio=prio;
+    task->prioEstatica=prioEstatica;
 }
 
 int task_getprio(task_t *task)
 {
     if(task==NULL)
     {
-        return=filaAtual->prioEstatica;
+        return=filaPronta->prioEstatica;
     }
     task->prio=prio;
 }
