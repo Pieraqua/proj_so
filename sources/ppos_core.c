@@ -53,13 +53,13 @@ void ppos_init()
     }
     mainTask.preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
     tarefaAtual = &mainTask;
-    queue_append((queue_t **)(&filaTarefas), (queue_t *)(&mainTask));
 
     task_create(&dispatcherTask, dispatcher, 0);
     dispatcherTask.status = PRONTA;
 
     queue_remove((queue_t **)&filaProntas, (queue_t *)&dispatcherTask);
     queue_append((queue_t **)&filaTarefas, (queue_t *)&dispatcherTask);
+    queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
 
     taskCont = 0;
 
