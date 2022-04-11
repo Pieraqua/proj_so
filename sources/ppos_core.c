@@ -20,6 +20,10 @@ task_t dispatcherTask;
 /* Maior id criado ate agora */
 int maiorId = 0;
 int taskCont = 1;
+
+/* Declaracao de funcoes */
+static void dispatcher();
+
 // Inicializar as variáveis e o buffer do printf
 void ppos_init()
 {
@@ -158,7 +162,7 @@ void task_exit(int exit_code)
     printf("task_exit: tarefa %i sendo encerrada\n", atual->id);
 #endif
     atual->status = TERMINADA;
-    if (task_switch(&dispatcher) < 0)
+    if (task_switch(&dispatcherTask) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
     //taskCont = taskCont - 1;
 }
@@ -186,7 +190,7 @@ void dispatcher()
             {
             case PRONTA:
                 //roda fila
-                /* code */
+                filaProntas = filaProntas->next;
                 break;
             case TERMINADA:
                 //tira da fila
@@ -195,10 +199,11 @@ void dispatcher()
 		queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
                 
 		taskCont = taskCont - 1;
-		break;
+                break;
             case SUSPENSA:
+                /* Removemos a tarefa e desalocamos */
                 //sai da fila de prontas
-                /* code */
+                queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
                 break;
             }
         }
@@ -213,7 +218,8 @@ void task_yield()
 {
 
 }
-static task_t* scheduler()
+
+static task_t *scheduler()
 {
-	return filaProntas;
+    return filaProntas;
 }
