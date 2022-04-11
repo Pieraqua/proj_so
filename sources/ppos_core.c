@@ -56,7 +56,7 @@ void ppos_init()
     queue_append((queue_t **)(&filaTarefas), (queue_t *)(&mainTask));
 
     task_create(&dispatcherTask, dispatcher, 0);
-
+    dispatcherTask.status = 0;
     queue_remove((queue_t **)(&filaTarefas), (queue_t *)(&dispatcherTask));
 
     //Inicilização do buffer do printf
@@ -78,8 +78,8 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     {
         task->context.uc_stack.ss_sp = stack;
         task->context.uc_stack.ss_size = STACKSIZE;
-        task->context.uc_stack.ss_flags = 0;       // Deixa como zero a máscara das flags
-        task->context.uc_link = 0; // Quando a task terminar ela  e x p l o d e
+        task->context.uc_stack.ss_flags = 0; // Deixa como zero a máscara das flags
+        task->context.uc_link = 0;           // Quando a task terminar ela  e x p l o d e
     }
     else
     {
@@ -218,7 +218,7 @@ static void dispatcher()
 // Interessante usar o task_switch apontando para a tarefa Dipatcher
 void task_yield()
 {
-
+    task_switch(&dispatcherTask);
 }
 
 static task_t *scheduler()
