@@ -1,5 +1,13 @@
+/* Mariana Gomes Luz e Paulo Sergio Avila */
+/*    RA: 1607910   ///   RA: 2022664     */
+
+#include <stdio.h>
+#include "queue.h"
 #include "ppos.h"
-#include "ppos_core.h"
+#include <ucontext.h>
+#include <stdlib.h>
+
+
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 //printfs de debug
 //#define PRINTDEBUG
