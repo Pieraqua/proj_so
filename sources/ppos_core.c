@@ -15,6 +15,8 @@ task_t *tarefaAtual;
 task_t *filaProntas;
 /* Estrutura que contem as informacoes da tarefa main */
 task_t mainTask;
+/* Tarefa dispatcher */
+task_t dispatcherTask;
 /* Maior id criado ate agora */
 int maiorId = 0;
 int taskCont = 1;
@@ -46,7 +48,12 @@ void ppos_init()
     }
     mainTask.preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
     tarefaAtual = &mainTask;
-    queue_append((queue_t **)(&filaTarefas), ((queue_t *)(&mainTask)));
+    queue_append((queue_t **)(&filaTarefas), (queue_t *)(&mainTask));
+
+    task_create(&dispatcherTask, dispatcher, 0);
+
+    queue_remove((queue_t **)(&filaTarefas), (queue_t *)(&dispatcherTask));
+
     //Inicilização do buffer do printf
     setvbuf(stdout, 0, _IONBF, 0);
 }
@@ -67,7 +74,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
         task->context.uc_stack.ss_sp = stack;
         task->context.uc_stack.ss_size = STACKSIZE;
         task->context.uc_stack.ss_flags = 0;       // Deixa como zero a máscara das flags
-        task->context.uc_link = &mainTask.context; // Quando a task terminar ela volta para o main
+        task->context.uc_link = 0; // Quando a task terminar ela  e x p l o d e
     }
     else
     {
@@ -145,14 +152,15 @@ void task_exit(int exit_code)
     /* Removemos a tarefa e desalocamos */
     //if (atual->id != 0)
     //   free((atual->context.uc_stack.ss_sp));
-    queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
+    //queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
     /* Trocamos para a main */
 #ifdef PRINTDEBUG
     printf("task_exit: tarefa %i sendo encerrada\n", atual->id);
 #endif
-    if (task_switch(&mainTask) < 0)
+    atual->status = TERMINADA;
+    if (task_switch(&dispatcher) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
-    taskCont = taskCont - 1;
+    //taskCont = taskCont - 1;
 }
 
 // Retorna o identificador da tarefa atual.
@@ -163,7 +171,6 @@ int task_id()
     return tarefaAtual->id;
 }
 
-<<<<<<< HEAD
 // Corpo da Tarefa Dispatcher
 //  -Passa o controle para a tarefa da vez
 void dispatcher()
@@ -171,7 +178,7 @@ void dispatcher()
     task_t *proxima;
     while (taskCont > 0)
     {
-        proxima = scheaduler();
+        proxima = scheduler();
         if (proxima != NULL)
         {
             task_switch(proxima);
@@ -184,7 +191,11 @@ void dispatcher()
             case TERMINADA:
                 //tira da fila
                 /* code */
-                break;
+		queue_remove((queue_t **)&filaTarefas, ((queue_t *)(proxima)));
+		queue_remove((queue_t **)&filaProntas, ((queue_t *)(proxima)));
+                
+		taskCont = taskCont - 1;
+		break;
             case SUSPENSA:
                 //sai da fila de prontas
                 /* code */
@@ -198,12 +209,11 @@ void dispatcher()
 // Função task_yield
 // Passa o controle da CPU de volta para o dispatcher
 // Interessante usar o task_switch apontando para a tarefa Dipatcher
-task_yield()
+void task_yield()
 {
+
 }
-=======
 static task_t* scheduler()
 {
 	return filaProntas;
 }
->>>>>>> 7a0b7c9abc548a1880ff64daf6e819dc358ada09
