@@ -3,11 +3,15 @@
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 //printfs de debug
 //#define PRINTDEBUG
+#define PRONTA 0
+#define TERMINADA 1
+#define SUSPENSA 2
 
 task_t *filaTarefas;
 task_t *tarefaAtual;
 task_t mainTask;
 int maiorId = 0;
+int taskCont = 1;
 // Inicializar as variáveis e o buffer do printf
 void ppos_init()
 {
@@ -77,6 +81,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 #ifdef PRINTDEBUG
     printf("task_create: criou tarefa %i\n", task->id);
 #endif
+    taskCont = taskCont + 1;
     return task->id;
 }
 
@@ -140,6 +145,7 @@ void task_exit(int exit_code)
 #endif
     if (task_switch(&mainTask) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
+    taskCont = taskCont - 1;
 }
 
 // Retorna o identificador da tarefa atual.
@@ -148,4 +154,42 @@ void task_exit(int exit_code)
 int task_id()
 {
     return tarefaAtual->id;
+}
+
+// Corpo da Tarefa Dispatcher
+//  -Passa o controle para a tarefa da vez
+void dispatcher()
+{
+    task_t *proxima;
+    while (taskCont > 0)
+    {
+        proxima = scheaduler();
+        if (proxima != NULL)
+        {
+            task_switch(proxima);
+            switch (proxima->status)
+            {
+            case PRONTA:
+                //roda fila
+                /* code */
+                break;
+            case TERMINADA:
+                //tira da fila
+                /* code */
+                break;
+            case SUSPENSA:
+                //sai da fila de prontas
+                /* code */
+                break;
+            }
+        }
+    }
+    task_exit(0);
+}
+
+// Função task_yield
+// Passa o controle da CPU de volta para o dispatcher
+// Interessante usar o task_switch apontando para a tarefa Dipatcher
+task_yield()
+{
 }
