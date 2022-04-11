@@ -7,7 +7,6 @@
 #include <ucontext.h>
 #include <stdlib.h>
 
-
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 //printfs de debug
 //#define PRINTDEBUG
@@ -21,6 +20,8 @@ task_t *filaTarefas;
 task_t *tarefaAtual;
 /* Fila que contem as tarefas atualmente prontas */
 task_t *filaProntas;
+/* Ponteiro para a tarefa de usuário que acabou de rodar*/
+task_t *tarefaPrevia;
 /* Estrutura que contem as informacoes da tarefa main */
 task_t mainTask;
 /* Tarefa dispatcher */
@@ -122,36 +123,36 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 int task_switch(task_t *task)
 {
     task_t *proxima = filaTarefas, *atual = tarefaAtual;
- 
-    if(task != &dispatcherTask)
+
+    if (task != &dispatcherTask)
     {
-   	if (atual == NULL)
-    	{
-       		fprintf(stderr, "Fila vazia?\n");
-        	return -3;
-    	}
-    	for (;;)
-    	{
-        	proxima = proxima->next;
-        	if (proxima == task)
-            		break;
-        	if (proxima == NULL)
-        	{
-            		fprintf(stderr, "Elemento nulo detectado - task_switch\n");
-            		return -1;
-        	}
-        	if (proxima == filaTarefas)
-        	{
-            		fprintf(stderr, "Tarefa nao encontrada, suspensa? - task_switch\n");
-            		return -2;
-        	}
-        	if (proxima == task)
-            		break;
-    	}
+        if (atual == NULL)
+        {
+            fprintf(stderr, "Fila vazia?\n");
+            return -3;
+        }
+        for (;;)
+        {
+            proxima = proxima->next;
+            if (proxima == task)
+                break;
+            if (proxima == NULL)
+            {
+                fprintf(stderr, "Elemento nulo detectado - task_switch\n");
+                return -1;
+            }
+            if (proxima == filaTarefas)
+            {
+                fprintf(stderr, "Tarefa nao encontrada, suspensa? - task_switch\n");
+                return -2;
+            }
+            if (proxima == task)
+                break;
+        }
     }
     else
     {
-	proxima = &dispatcherTask;	
+        proxima = &dispatcherTask;
     }
 #ifdef PRINTDEBUG
     printf("task_switch: trocando contexto %i -> %i\n", atual->id, proxima->id);
@@ -159,7 +160,7 @@ int task_switch(task_t *task)
     /* Setamos a tarefa a ser trocada como a tarefa ativa */
     tarefaAtual = proxima;
     /* E trocamos de contexto, salvando o contexto atual */
-    
+
     swapcontext(&(atual->context), &(proxima->context));
     /* Retorno com sucesso */
 
@@ -206,26 +207,27 @@ static void dispatcher()
     while (taskCont > 0)
     {
         proxima = scheduler();
+        tarefaPrevia = proxima;
         if (proxima != NULL)
         {
-	    queue_remove((queue_t **)&filaProntas, (queue_t*)proxima);
-            queue_append((queue_t **)&filaTarefas, (queue_t*)proxima);
+            queue_remove((queue_t **)&filaProntas, (queue_t *)proxima);
+            queue_append((queue_t **)&filaTarefas, (queue_t *)proxima);
             task_switch(proxima);
             switch (proxima->status)
             {
             case PRONTA:
                 /* Poe no fim da fila de prontas */
-		queue_remove((queue_t **)&filaTarefas, (queue_t*)proxima);
-		queue_append((queue_t **)&filaProntas, (queue_t *)proxima);
-		break;
+                queue_remove((queue_t **)&filaTarefas, (queue_t *)proxima);
+                queue_append((queue_t **)&filaProntas, (queue_t *)proxima);
+                break;
             case TERMINADA:
                 //tira da fila
                 /* code */
-		queue_remove((queue_t **)&filaTarefas, ((queue_t *)(proxima)));
-               
-		free((proxima->context.uc_stack.ss_sp));
+                queue_remove((queue_t **)&filaTarefas, ((queue_t *)(proxima)));
 
-		taskCont = taskCont - 1;
+                free((proxima->context.uc_stack.ss_sp));
+
+                taskCont = taskCont - 1;
                 break;
             case SUSPENSA:
                 break;
@@ -246,49 +248,54 @@ void task_yield()
 
 static task_t *scheduler()
 {
-    return filaProntas;
-}
-
-/*
-static task_t *scheduler()
-{   
-    task *previa=filaProntas;
-    task *escolhida;
-    if(previa==NULL)
+    task_t *escolhida = filaProntas;
+    task_t *contador = filaProntas;
+    //Scheaduler ainda não foi rodado se tarefaPrevia==NULL
+    if (tarefaPrevia != NULL)
+    {
+        tarefaPrevia->prioDinamica = tarefaPrevia->prioEstatica;
+    }
+    if (filaProntas == NULL)
     {
         return NULL;
     }
-    previa->prioDinamico=prioEstatico;
-    if(previa->next==NULL)
+    filaProntas->prioDinamica = filaProntas->prioDinamica - 1;
+    contador = filaProntas->next;
+    while (contador != filaProntas)
     {
-        
+        if (contador != tarefaPrevia)
+        {
+            contador->prioDinamica = contador->prioDinamica - 1;
+        }
+        //envelhece todas as tarefas que nao foram a que foi rodada previamente return filaProntas;
+        if (contador->prioDinamica <= escolhida->prioDinamica)
+        {
+            escolhida = contador;
+        }
     }
-    escolhida->priodinamica=escolhida->prioDinamica;
-
-
-    BubbleSort para a prioDinamica na filaProntas
-    
-    envelhece todas as tarefas que nao foram a que foi rodada previamente
-    return filaProntas;
+    return (escolhida);
 }
 
 void task_setprio(task_t *task, int prio)
 {
-    if(task==NULL)
+    if (prio > 20 || prio < -20)
     {
-        filaPronta->prioEstatica=prio;
+        fprintf(stderr, "Prioridade a ser setada não está de acordo com os parâmetros\n");
         return;
     }
-    task->prioEstatica=prioEstatica;
+    if (task == NULL)
+    {
+        tarefaAtual->prioEstatica = prio;
+        return;
+    }
+    task->prioEstatica = task->prioEstatica;
 }
 
 int task_getprio(task_t *task)
 {
-    if(task==NULL)
+    if (task == NULL)
     {
-        return=filaPronta->prioEstatica;
+        return (tarefaAtual->prioEstatica);
     }
-    task->prio=prio;
+    return task->prioEstatica;
 }
-
-*/
