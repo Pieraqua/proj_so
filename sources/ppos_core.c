@@ -1,6 +1,8 @@
 #include "ppos.h"
 #include "ppos_core.h"
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
+//printfs de debug
+//#define PRINTDEBUG
 
 task_t *filaTarefas;
 task_t *tarefaAtual;
@@ -72,7 +74,9 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
 
     queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
+#ifdef PRINTDEBUG
     printf("task_create: criou tarefa %i\n", task->id);
+#endif
     return task->id;
 }
 
@@ -103,8 +107,9 @@ int task_switch(task_t *task)
         if (proxima == task)
             break;
     }
+#ifdef PRINTDEBUG
     printf("task_switch: trocando contexto %i -> %i\n", atual->id, proxima->id);
-
+#endif
     /* Setamos a tarefa a ser trocada como a tarefa ativa */
     tarefaAtual = proxima;
     /* E trocamos de contexto, salvando o contexto atual */
@@ -130,7 +135,9 @@ void task_exit(int exit_code)
     //   free((atual->context.uc_stack.ss_sp));
     queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
     /* Trocamos para a main */
+#ifdef PRINTDEBUG
     printf("task_exit: tarefa %i sendo encerrada\n", atual->id);
+#endif
     if (task_switch(&mainTask) < 0)
         fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
 }
