@@ -287,6 +287,7 @@ static void dispatcher()
             }
         }
     }
+    printf("Task %i Exit : Execution Time %i ms  . Processor time %i ms  . %i activations.  \n ", dispatcherTask.id, (dispatcherTask.timeTaskExit - dispatcherTask.timeTaskCreate), dispatcherTask.timeProcessor, dispatcherTask.activations);
     task_switch(&mainTask);
 }
 
