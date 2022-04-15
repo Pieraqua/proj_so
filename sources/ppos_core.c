@@ -30,7 +30,11 @@ task_t mainTask;
 task_t dispatcherTask;
 /* Maior id criado ate agora */
 int maiorId = 0;
+/* Contador de tarefas */
 int taskCont = 0;
+#define QUANTUM_VAL 20
+/* Quantum de tempo da tarefa atual */
+int quantum = QUANTUM_VAL;
 
 /* Struct de tratamento de sinal */
 struct sigaction action;
@@ -193,8 +197,10 @@ int task_switch(task_t *task)
 #endif
     /* Setamos a tarefa a ser trocada como a tarefa ativa */
     tarefaAtual = proxima;
-    /* E trocamos de contexto, salvando o contexto atual */
 
+    /* Voltamos o quantum para o valor maximo */
+    quantum = QUANTUM_VAL;
+    /* E trocamos de contexto, salvando o contexto atual */
     swapcontext(&(atual->context), &(proxima->context));
     /* Retorno com sucesso */
 
@@ -221,7 +227,7 @@ void task_exit(int exit_code)
 #endif
     atual->status = TERMINADA;
     if (task_switch(&dispatcherTask) < 0)
-        fprintf(stderr, "Erro ao trocar para a main - task_exit\n");
+        fprintf(stderr, "Erro ao trocar para o dispatcher - task_exit\n");
     //taskCont = taskCont - 1;
 }
 
@@ -339,5 +345,16 @@ int task_getprio(task_t *task)
 
 void systick()
 {
-
+    /* Reduzir o quantum da tarefa atual em 1 */
+    if(tarefaAtual->id > 1)
+    {
+	quantum--;
+        /* Caso seja 0, trocar de tarefa */
+        if(!quantum)
+	{   
+            quantum = QUANTUM_VAL;
+	    if (task_switch(&dispatcherTask) < 0)
+        	fprintf(stderr, "Erro ao trocar para o dispatcher - systick\n");
+	}
+    }
 }
