@@ -32,6 +32,8 @@ task_t dispatcherTask;
 int maiorId = 0;
 /* Contador de tarefas */
 int taskCont = 0;
+/* Variável Global Timer */
+int time = 0;
 #define QUANTUM_VAL 20
 /* Quantum de tempo da tarefa atual */
 int quantum = QUANTUM_VAL;
@@ -94,24 +96,23 @@ void ppos_init()
     action.sa_handler = systick;
     sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
-    if(sigaction(SIGALRM, &action, 0) < 0)
+    if (sigaction(SIGALRM, &action, 0) < 0)
     {
-	perror("Erro em sigaction: ");
-	exit(1);
+        perror("Erro em sigaction: ");
+        exit(1);
     }
 
     timer.it_value.tv_usec = 1000; // primeiro disparo, em micro-segundos
-    timer.it_value.tv_sec  = 0;	   // primeiro disparo, em segundos
-    
+    timer.it_value.tv_sec = 0;     // primeiro disparo, em segundos
+
     timer.it_interval.tv_usec = 1000; // um disparo por milisegundo
-    timer.it_interval.tv_sec  = 0;
+    timer.it_interval.tv_sec = 0;
 
-    if (setitimer (ITIMER_REAL, &timer, 0) < 0)
+    if (setitimer(ITIMER_REAL, &timer, 0) < 0)
     {
-	perror("Erro em setitimer: ");
-	exit(1);
+        perror("Erro em setitimer: ");
+        exit(1);
     }
-
 }
 
 // Cria uma nova tarefa
@@ -123,6 +124,12 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     maiorId++;
     task->id = maiorId;           // define a id da task
     task->status = 0;             // Define o status da task a ser criada como Pronta
+    task->timeTaskCreate = time;  // Tempo em que a tarefa foi criada de acordo com a variavel global time em milisegundos
+    task->timeTaskExit = 0;       // Tempo em que a tarefa foi encerrada de acordo com a variavel global time em milisegundos
+    task->timeProcessor = 0;      // Tempo total do tempo que usou o processador
+    task->timeBeginProcessor = 0; // Tempo que começou a usar o processador em dada ativacao
+    task->timeEndProcessor = 0;   // Tempo que terminou de usar o processador em dada ativacao
+    task->activations = 0;        // Tanto de vezes que foi ativada
     getcontext(&(task->context)); // Copia o contexto atual e copia para contextoTask
     stack = malloc(STACKSIZE);
     if (stack)
@@ -201,6 +208,10 @@ int task_switch(task_t *task)
     /* Voltamos o quantum para o valor maximo */
     quantum = QUANTUM_VAL;
     /* E trocamos de contexto, salvando o contexto atual */
+    atual->timeEndProcessor = time; // A tarefa anterior termina
+    atual->timeProcessor = atual->timeProcessor + (atual->timeEndProcessor - atual->timeBeginProcessor);
+    tarefaAtual->timeBeginProcessor = time; // Tempo que começou a usar o processador em dada ativacao
+    tarefaAtual->activations++;             // Tanto de vezes que foi ativada
     swapcontext(&(atual->context), &(proxima->context));
     /* Retorno com sucesso */
 
@@ -216,7 +227,7 @@ void task_exit(int exit_code)
     {
         fprintf(stderr, "Fila vazia? - task_exit\n");
     }
-
+    atual->timeTaskExit = time;
     /* Removemos a tarefa e desalocamos */
     //if (atual->id != 0)
     //   free((atual->context.uc_stack.ss_sp));
@@ -225,6 +236,8 @@ void task_exit(int exit_code)
 #ifdef PRINTDEBUG
     printf("task_exit: tarefa %i sendo encerrada\n", atual->id);
 #endif
+    atual->timeTaskExit = time;
+    printf("Task %i Exit : Execution Time %i ms  . Processor time %i ms  . %i activations.  \n ", atual->id, (atual->timeTaskExit - atual->timeTaskCreate), atual->timeProcessor, atual->activations);
     atual->status = TERMINADA;
     if (task_switch(&dispatcherTask) < 0)
         fprintf(stderr, "Erro ao trocar para o dispatcher - task_exit\n");
@@ -312,7 +325,7 @@ static task_t *scheduler()
         {
             escolhida = contador;
         }
-	contador = contador->next;
+        contador = contador->next;
     }
     return (escolhida);
 }
@@ -326,7 +339,7 @@ void task_setprio(task_t *task, int prio)
     }
     if (task == NULL)
     {
-	tarefaAtual->prioDinamica = prio;
+        tarefaAtual->prioDinamica = prio;
         tarefaAtual->prioEstatica = prio;
         return;
     }
@@ -345,16 +358,22 @@ int task_getprio(task_t *task)
 
 void systick()
 {
+    time++;
     /* Reduzir o quantum da tarefa atual em 1 */
-    if(tarefaAtual->id > 1)
+    if (tarefaAtual->id > 1)
     {
-	quantum--;
+        quantum--;
         /* Caso seja 0, trocar de tarefa */
-        if(!quantum)
-	{   
+        if (!quantum)
+        {
             quantum = QUANTUM_VAL;
-	    if (task_switch(&dispatcherTask) < 0)
-        	fprintf(stderr, "Erro ao trocar para o dispatcher - systick\n");
-	}
+            if (task_switch(&dispatcherTask) < 0)
+                fprintf(stderr, "Erro ao trocar para o dispatcher - systick\n");
+        }
     }
+}
+
+unsigned int systime()
+{
+    return time;
 }

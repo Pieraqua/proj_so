@@ -17,8 +17,14 @@ typedef struct task_t
   ucontext_t context;         // contexto armazenado da tarefa
   short status;               // pronta, rodando, suspensa, ...
   short preemptable;          // pode ser preemptada?
-  int prioEstatica;
-  int prioDinamica;
+  int prioEstatica;           // Prioridade Estatica
+  int prioDinamica;           // Prioridade Dinamica, muda de acordo com envelhecimento
+  int timeTaskCreate;         // Tempo em que a tarefa foi criada de acordo com a variavel global time em milisegundos
+  int timeTaskExit;           // Tempo em que a tarefa foi encerrada de acordo com a variavel global time em milisegundos
+  int timeProcessor;          // Tempo total do tempo que usou o processador
+  int timeBeginProcessor;     // Tempo que começou a usar o processador em dada ativacao
+  int timeEndProcessor;       // Tempo que terminou de usar o processador em dada ativacao
+  int activations;            // Tanto de vezes que foi ativada
   // ... (outros campos serão adicionados mais tarde)
 } task_t;
 
