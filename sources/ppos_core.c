@@ -6,6 +6,8 @@
 #include "ppos.h"
 #include <ucontext.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/time.h>
 
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 //printfs de debug
@@ -30,9 +32,18 @@ task_t dispatcherTask;
 int maiorId = 0;
 int taskCont = 0;
 
+/* Struct de tratamento de sinal */
+struct sigaction action;
+/* Struct de inicializacao do timer */
+struct itimerval timer;
+
 /* Declaracao de funcoes */
+/* Funcao da tarefa dispatcher */
 static void dispatcher();
+/* Funcao que retorna a proxima tarefa a ser executada */
 static task_t *scheduler();
+/* Funcao de handler do systick */
+void systick();
 
 // Inicializar as variáveis e o buffer do printf
 void ppos_init()
@@ -74,6 +85,29 @@ void ppos_init()
 
     //Inicilização do buffer do rintf
     setvbuf(stdout, 0, _IONBF, 0);
+
+    //Inicializacao do temporizador
+    action.sa_handler = systick;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    if(sigaction(SIGALRM, &action, 0) < 0)
+    {
+	perror("Erro em sigaction: ");
+	exit(1);
+    }
+
+    timer.it_value.tv_usec = 1000; // primeiro disparo, em micro-segundos
+    timer.it_value.tv_sec  = 0;	   // primeiro disparo, em segundos
+    
+    timer.it_interval.tv_usec = 1000; // um disparo por milisegundo
+    timer.it_interval.tv_sec  = 0;
+
+    if (setitimer (ITIMER_REAL, &timer, 0) < 0)
+    {
+	perror("Erro em setitimer: ");
+	exit(1);
+    }
+
 }
 
 // Cria uma nova tarefa
@@ -301,4 +335,9 @@ int task_getprio(task_t *task)
         return (tarefaAtual->prioEstatica);
     }
     return task->prioEstatica;
+}
+
+void systick()
+{
+
 }
