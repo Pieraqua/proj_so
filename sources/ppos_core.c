@@ -268,10 +268,11 @@ static task_t *scheduler()
             contador->prioDinamica = contador->prioDinamica - 1;
         }
         //envelhece todas as tarefas que nao foram a que foi rodada previamente return filaProntas;
-        if (contador->prioDinamica <= escolhida->prioDinamica)
+        if (contador->prioDinamica < escolhida->prioDinamica)
         {
             escolhida = contador;
         }
+	contador = contador->next;
     }
     return (escolhida);
 }
@@ -285,9 +286,11 @@ void task_setprio(task_t *task, int prio)
     }
     if (task == NULL)
     {
+	tarefaAtual->prioDinamica = prio;
         tarefaAtual->prioEstatica = prio;
         return;
     }
+    task->prioDinamica = prio;
     task->prioEstatica = prio;
 }
 
