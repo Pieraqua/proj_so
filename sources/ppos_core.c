@@ -91,7 +91,7 @@ void ppos_init()
 
     queue_remove((queue_t **)&filaProntas, (queue_t *)&dispatcherTask);
     queue_append((queue_t **)&filaTarefas, (queue_t *)&dispatcherTask);
-    queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
+    // queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
 
     taskCont = 0;
 
@@ -119,6 +119,9 @@ void ppos_init()
         perror("Erro em setitimer: ");
         exit(1);
     }
+
+    queue_append((queue_t **)(&filaProntas), (queue_t *)&mainTask);
+    taskCont = taskCont + 1;
     task_yield();
 }
 
@@ -160,11 +163,13 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     // Define o contexto da task no elemento de fila como o contextoTask
     task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
     /* Adiciona a tarefa para a fila de tarefas prontas */
+
     queue_append((queue_t **)(&filaProntas), (queue_t *)task);
     // queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
 #ifdef PRINTDEBUG
     printf("task_create: criou tarefa %i\n", task->id);
 #endif
+
     taskCont = taskCont + 1;
     task->prioDinamica = 0;
     task->prioEstatica = 0;
