@@ -12,6 +12,7 @@
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 // printfs de debug
 //#define PRINTDEBUG
+#define QUANTUM_VAL 20
 #define PRONTA 0
 #define TERMINADA 1
 #define SUSPENSA 2
@@ -34,7 +35,6 @@ int maiorId = 0;
 int taskCont = 0;
 /* Variável Global Timer */
 int time = 0;
-#define QUANTUM_VAL 20
 /* Quantum de tempo da tarefa atual */
 int quantum = QUANTUM_VAL;
 
@@ -91,7 +91,7 @@ void ppos_init()
 
     queue_remove((queue_t **)&filaProntas, (queue_t *)&dispatcherTask);
     queue_append((queue_t **)&filaTarefas, (queue_t *)&dispatcherTask);
-    // queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
+    queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
 
     taskCont = 0;
 
@@ -120,7 +120,8 @@ void ppos_init()
         exit(1);
     }
 
-    queue_append((queue_t **)(&filaProntas), (queue_t *)&mainTask);
+    // queue_append((queue_t **)(&filaProntas), (queue_t *)&mainTask);
+    tarefaAtual = &mainTask;
     taskCont = taskCont + 1;
     task_yield();
 }
