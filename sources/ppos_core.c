@@ -10,7 +10,7 @@
 #include <sys/time.h>
 
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
-//printfs de debug
+// printfs de debug
 //#define PRINTDEBUG
 #define PRONTA 0
 #define TERMINADA 1
@@ -34,7 +34,7 @@ int maiorId = 0;
 int taskCont = 0;
 /* Variável Global Timer */
 int time = 0;
-#define QUANTUM_VAL 20
+#define QUANTUM_VAL 100
 /* Quantum de tempo da tarefa atual */
 int quantum = QUANTUM_VAL;
 
@@ -56,7 +56,7 @@ void ppos_init()
 {
     char *stack;
 
-    //Inicialização das variáveis
+    // Inicialização das variáveis
     filaTarefas = NULL;
     mainTask.next = NULL;
     mainTask.prev = NULL;
@@ -85,14 +85,14 @@ void ppos_init()
 
     queue_remove((queue_t **)&filaProntas, (queue_t *)&dispatcherTask);
     queue_append((queue_t **)&filaTarefas, (queue_t *)&dispatcherTask);
-    queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
-
+    // queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
+    queue_append((queue_t **)&filaProntas, (queue_t *)&mainTask);
     taskCont = 0;
 
-    //Inicilização do buffer do rintf
+    // Inicilização do buffer do rintf
     setvbuf(stdout, 0, _IONBF, 0);
 
-    //Inicializacao do temporizador
+    // Inicializacao do temporizador
     action.sa_handler = systick;
     sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
@@ -113,6 +113,8 @@ void ppos_init()
         perror("Erro em setitimer: ");
         exit(1);
     }
+    taskCont = taskCont + 1;
+    task_switch(&dispatcherTask);
 }
 
 // Cria uma nova tarefa
@@ -120,7 +122,7 @@ void ppos_init()
 int task_create(task_t *task, void (*start_routine)(void *), void *arg)
 {
     char *stack;
-    //if(ID==MAXINT)
+    // if(ID==MAXINT)
     maiorId++;
     task->id = maiorId;           // define a id da task
     task->status = 0;             // Define o status da task a ser criada como Pronta
@@ -154,7 +156,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     task->preemptable = 0; // Define a variavel preempable da task do elemento de fila como 0, ou seja não preemptável
     /* Adiciona a tarefa para a fila de tarefas prontas */
     queue_append((queue_t **)(&filaProntas), (queue_t *)task);
-    //queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
+    // queue_append((queue_t **)(&filaTarefas), (queue_t *)task);
 #ifdef PRINTDEBUG
     printf("task_create: criou tarefa %i\n", task->id);
 #endif
@@ -164,7 +166,7 @@ int task_create(task_t *task, void (*start_routine)(void *), void *arg)
     return task->id;
 }
 
-//Muda para outra tarefa, transfere o processador para a tarefa indicada.
+// Muda para outra tarefa, transfere o processador para a tarefa indicada.
 int task_switch(task_t *task)
 {
     task_t *proxima = filaTarefas, *atual = tarefaAtual;
@@ -229,9 +231,9 @@ void task_exit(int exit_code)
     }
     atual->timeTaskExit = time;
     /* Removemos a tarefa e desalocamos */
-    //if (atual->id != 0)
-    //   free((atual->context.uc_stack.ss_sp));
-    //queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
+    // if (atual->id != 0)
+    //    free((atual->context.uc_stack.ss_sp));
+    // queue_remove((queue_t **)&filaTarefas, ((queue_t *)(atual)));
     /* Trocamos para a main */
 #ifdef PRINTDEBUG
     printf("task_exit: tarefa %i sendo encerrada\n", atual->id);
@@ -241,7 +243,7 @@ void task_exit(int exit_code)
     atual->status = TERMINADA;
     if (task_switch(&dispatcherTask) < 0)
         fprintf(stderr, "Erro ao trocar para o dispatcher - task_exit\n");
-    //taskCont = taskCont - 1;
+    // taskCont = taskCont - 1;
 }
 
 // Retorna o identificador da tarefa atual.
@@ -274,7 +276,7 @@ static void dispatcher()
                 queue_append((queue_t **)&filaProntas, (queue_t *)proxima);
                 break;
             case TERMINADA:
-                //tira da fila
+                // tira da fila
                 /* code */
                 queue_remove((queue_t **)&filaTarefas, ((queue_t *)(proxima)));
 
@@ -289,7 +291,7 @@ static void dispatcher()
     }
     dispatcherTask.timeTaskExit = time;
     printf("Task %i Exit : Execution Time %i ms  . Processor time %i ms  . %i activations.  \n ", dispatcherTask.id, (dispatcherTask.timeTaskExit - dispatcherTask.timeTaskCreate), dispatcherTask.timeProcessor, dispatcherTask.activations);
-    task_switch(&mainTask);
+    exit(0);
 }
 
 // Função task_yield
@@ -305,7 +307,7 @@ static task_t *scheduler()
 {
     task_t *escolhida = filaProntas;
     task_t *contador;
-    //Scheaduler ainda não foi rodado se tarefaPrevia==NULL
+    // Scheaduler ainda não foi rodado se tarefaPrevia==NULL
     if (tarefaPrevia != NULL)
     {
         tarefaPrevia->prioDinamica = tarefaPrevia->prioEstatica;
@@ -322,7 +324,7 @@ static task_t *scheduler()
         {
             contador->prioDinamica = contador->prioDinamica - 1;
         }
-        //envelhece todas as tarefas que nao foram a que foi rodada previamente return filaProntas;
+        // envelhece todas as tarefas que nao foram a que foi rodada previamente return filaProntas;
         if (contador->prioDinamica < escolhida->prioDinamica)
         {
             escolhida = contador;
@@ -362,7 +364,7 @@ void systick()
 {
     time++;
     /* Reduzir o quantum da tarefa atual em 1 */
-    if (tarefaAtual->id > 1)
+    if (tarefaAtual->id != 1)
     {
         quantum--;
         /* Caso seja 0, trocar de tarefa */
