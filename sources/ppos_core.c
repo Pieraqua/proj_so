@@ -12,7 +12,6 @@
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 // printfs de debug
 //#define PRINTDEBUG
-#define QUANTUM_VAL 20
 #define PRONTA 0
 #define TERMINADA 1
 #define SUSPENSA 2
@@ -36,6 +35,7 @@ int taskCont = 0;
 /* Variável Global Timer */
 int time = 0;
 /* Quantum de tempo da tarefa atual */
+#define QUANTUM_VAL 20
 int quantum = QUANTUM_VAL;
 
 /* Struct de tratamento de sinal */
@@ -91,8 +91,8 @@ void ppos_init()
 
     queue_remove((queue_t **)&filaProntas, (queue_t *)&dispatcherTask);
     queue_append((queue_t **)&filaTarefas, (queue_t *)&dispatcherTask);
-    queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
-
+    // queue_append((queue_t **)&filaTarefas, (queue_t *)&mainTask);
+    queue_append((queue_t **)&filaProntas, (queue_t *)&mainTask);
     taskCont = 0;
 
     // Inicilização do buffer do rintf
@@ -120,10 +120,8 @@ void ppos_init()
         exit(1);
     }
 
-    // queue_append((queue_t **)(&filaProntas), (queue_t *)&mainTask);
-    tarefaAtual = &mainTask;
     taskCont = taskCont + 1;
-    task_yield();
+    task_switch(&dispatcherTask);
 }
 
 // Cria uma nova tarefa
@@ -302,7 +300,7 @@ static void dispatcher()
     }
     dispatcherTask.timeTaskExit = time;
     printf("Task %i Exit : Execution Time %i ms  . Processor time %i ms  . %i activations.  \n ", dispatcherTask.id, (dispatcherTask.timeTaskExit - dispatcherTask.timeTaskCreate), dispatcherTask.timeProcessor, dispatcherTask.activations);
-    task_switch(&mainTask);
+    exit(0);
 }
 
 // Função task_yield
@@ -375,7 +373,7 @@ void systick()
 {
     time++;
     /* Reduzir o quantum da tarefa atual em 1 */
-    if (tarefaAtual->id > 1)
+    if (tarefaAtual->id != 1)
     {
         quantum--;
         /* Caso seja 0, trocar de tarefa */
