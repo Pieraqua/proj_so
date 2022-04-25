@@ -14,9 +14,9 @@ typedef struct
 	int elemento;
 } filaint_t;
 
-void print_elem(void* ptr)
+void print_elem(void *ptr)
 {
-	printf("%d ", ((filaint_t*) ptr)->elemento);
+	printf("%d", ((filaint_t *)ptr)->elemento);
 }
 filaint_t *filaInteiros;
 
@@ -53,9 +53,9 @@ int push_filaint(filaint_t **fila, int numero)
 	return 0;
 }
 
-void *threadFxn(void* arg)
+void *threadFxn(void *arg)
 {
-	int argumento = *((int*)arg);
+	int argumento = *((int *)arg);
 	int antigo;
 	int elemento;
 	int i = 0;
@@ -71,7 +71,7 @@ void *threadFxn(void* arg)
 		push_filaint(&filaInteiros, elemento);
 
 		/* Imprime a operacao realizada */
-		printf("thread %i: tira %i da fila, põe %i, da fila: \n", argumento, antigo, elemento);
+		printf("thread %i: tira %i da fila, põe %i, da ", argumento, antigo, elemento);
 		queue_print("fila", (queue_t *)filaInteiros, print_elem);
 	}
 	pthread_exit(NULL);
@@ -91,9 +91,9 @@ int main(int argc, char *argv[])
 
 	filaInteiros = malloc(sizeof(filaint_t));
 
-	filaInteiros->elemento = rand()%100;
-	filaInteiros->prev = (queue_t*)filaInteiros;
-	filaInteiros->next = (queue_t*)filaInteiros;
+	filaInteiros->elemento = rand() % 100;
+	filaInteiros->prev = (queue_t *)filaInteiros;
+	filaInteiros->next = (queue_t *)filaInteiros;
 
 	int i = 0;
 	// filaInteiros = malloc(sizeof(filaint_t));
