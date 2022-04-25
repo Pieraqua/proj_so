@@ -14,7 +14,7 @@ typedef struct
 	int elemento;
 } filaint_t;
 
-filaint_t filaInteiros;
+filaint_t *filaInteiros;
 
 /* funcao de pop */
 int pop_filaint(filaint_t *fila)
@@ -57,16 +57,17 @@ void *threadFxn(void *arg)
 	for (i = 0; i < 100; i++)
 	{
 		/* Retira primeiro elemento da fila e salva em uma variavel */
-		antigo = pop_filaint(&filaInteiros);
+		antigo = pop_filaint(filaInteiros);
 
 		/* Cria valor novo aleatorio */
 		elemento = rand() % 100;
 
 		/* Poe novo valor na fila */
-		push_filaint(&filaInteiros, elemento);
+		push_filaint(filaInteiros, elemento);
 
 		/* Imprime a operacao realizada */
-		printf("Retirado o elemento %i da fila, e adicionado o elemento %i da fila.\n", antigo, elemento);
+		printf("thread %i: tira %i da fila, põe %i, da fila: \n", thread1, antigo, elemento);
+		queue_print("fila", (queue_t *)filaInteiros, print_elem);
 	}
 	pthread_exit(NULL);
 }
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
 	// filaInteiros->prev = filaInteiros;
 	// filaInteiros->elemento = rand();
 	for (i = 0; i < 10; i++)
-		push_filaint(&filaInteiros, rand() % 100);
+		push_filaint(filaInteiros, rand() % 100);
 
 	int err = pthread_create(&thread1, &attr, threadFxn, NULL);
 	// Check if thread is created sucessfuly
