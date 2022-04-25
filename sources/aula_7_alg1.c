@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	// filaInteiros->elemento = rand();
 	for (i = 0; i < 10; i++)
 		push_filaint(&filaInteiros, rand() % 100);
-	int arg1 = 0;
+	int arg1 = 1;
 	int err = pthread_create(&thread1, &attr, threadFxn, &arg1);
 	// Check if thread is created sucessfuly
 	if (err)
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 	{
 		printf("A thread 1 foi criada com a Thread ID de : %i\n", err);
 	}
-	int arg2 = 1;
+	int arg2 = 2;
 	err = pthread_create(&thread2, &attr, threadFxn, &arg2);
 	// Check if thread is created sucessfuly
 	if (err)
