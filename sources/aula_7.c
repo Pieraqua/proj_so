@@ -24,12 +24,17 @@ void threadFxn()
 
 void main()
 {
+	pthread_attr_t attr;
+	long status;
 	/* Cria thread 1 */
 	pthread_t thread1;
 	/* Cria thread 2 */
 	pthread_t thread2;
 
-	int stderr = pthread_create(&thread1, NULL, &threadFxn, NULL);
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	int stderr = pthread_create(&thread1, &attr, threadFxn, NULL);
 	// Check if thread is created sucessfuly
 	if (stderr)
 	{
@@ -40,7 +45,7 @@ void main()
 	{
 		printf("A thread 1 foi criada com a Thread ID de : %i", stderr);
 	}
-	stderr = pthread_create(&thread2, NULL, &threadFxn, NULL);
+	stderr = pthread_create(&thread2, &attr, threadFxn, NULL);
 	// Check if thread is created sucessfuly
 	if (stderr)
 	{
@@ -49,5 +54,20 @@ void main()
 	}
 	else
 		printf("A thread 2 foi criada com a Thread ID de : %i", stderr);
-	exit(0);
+	
+	status = pthread_join(thread1, NULL);
+	if(status)
+	{
+		perror("pthread_join");
+		exit(1);
+	}
+
+	status = pthread_join(thread2, NULL);
+	if(status)
+	{
+		perror("pthread_join");
+		exit(1);
+	}
+
+	pthread_exit(NULL);
 }
