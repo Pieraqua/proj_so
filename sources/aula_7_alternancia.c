@@ -53,6 +53,8 @@ int push_filaint(filaint_t **fila, int numero)
 	return 0;
 }
 
+int turn = 0;
+
 void *threadFxn(void *arg)
 {
 	int argumento = *((int *)arg);
@@ -61,6 +63,7 @@ void *threadFxn(void *arg)
 	int i = 0;
 	for (i = 0; i < 100; i++)
 	{
+		while(turn!=argumento); //busy waiting
 		/* Retira primeiro elemento da fila e salva em uma variavel */
 		antigo = pop_filaint(&filaInteiros);
 
@@ -73,6 +76,8 @@ void *threadFxn(void *arg)
 		/* Imprime a operacao realizada */
 		printf("thread %i: tira %i da fila, põe %i, da ", argumento, antigo, elemento);
 		queue_print("fila", (queue_t *)filaInteiros, print_elem);
+
+		turn = (turn+1)%2;
 	}
 	pthread_exit(NULL);
 }
