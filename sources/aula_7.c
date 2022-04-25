@@ -14,10 +14,15 @@ typedef struct
 	int elemento;
 } filaint_t;
 
-filaint_t filaInteiros;
+filaint_t* filaInteiros;
+
+void print_elem(void* ptr)
+{
+	printf("%d ", ((filaint_t*) ptr)->elemento);
+}
 
 /* funcao de pop */
-int pop_filaint(filaint_t *fila)
+int pop_filaint(filaint_t **fila)
 {
 	if (fila == NULL)
 	{
@@ -25,9 +30,9 @@ int pop_filaint(filaint_t *fila)
 		return -1;
 	}
 
-	filaint_t *atual = fila;
+	filaint_t *atual = *fila;
 
-	queue_remove((queue_t **)&fila, (queue_t *)atual);
+	queue_remove((queue_t **)fila, (queue_t *)atual);
 
 	int numero = atual->elemento;
 	free(atual);
@@ -36,11 +41,11 @@ int pop_filaint(filaint_t *fila)
 }
 
 /* funcao de push */
-int push_filaint(filaint_t *fila, int numero)
+int push_filaint(filaint_t **fila, int numero)
 {
 	filaint_t *atual = malloc(sizeof(filaint_t));
-
-	if (queue_append((queue_t **)&fila, (queue_t *)atual))
+	atual->elemento = numero;
+	if (queue_append((queue_t **)fila, (queue_t *)atual))
 	{
 		fprintf(stderr, "erro push!\n");
 		return -1;
@@ -82,6 +87,12 @@ int main(int argc, char *argv[])
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	filaInteiros = malloc(sizeof(filaint_t));
+
+	filaInteiros->elemento = rand()%100;
+	filaInteiros->prev = (queue_t*)&filaInteiros;
+	filaInteiros->next = (queue_t*)&filaInteiros;
 
 	int i = 0;
 	// filaInteiros = malloc(sizeof(filaint_t));
