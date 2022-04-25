@@ -23,10 +23,10 @@ LFLAGS =
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -lm
+LIBS = -lm -lpthread 
 
 # define the C source files
-SRCS = sources/pingpong-maintask.c sources/queue.c sources/ppos_core.c 
+SRCS = sources/queue.c sources/aula_7.c 
 
 # define the C object files 
 #

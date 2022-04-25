@@ -3,19 +3,32 @@
 
 #include <stdlib.h>
 #include <queue.h>
-queue_t *filaThread;
+#include <pthread.h>
+#include <stdio.h>
+
+
+/* Funcao das threads */
+#define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
+typedef struct
+{
+	queue_t *prev, *next; // ponteiros para usar em filas
+	int elemento;
+} filaint_t;
+
+filaint_t* filaInteiros;
 
 /* funcao de pop */
 int pop_filaint(filaint_t* fila)
 {
-	if(!fila)
+	if(fila == NULL)
 	{
-		fprintf(stderr, "Fila nula?");
+		fprintf(stderr, "fila nula?\n");
 		return -1;
 	}
 
-	filaint_t* atual = filaThread;
-	queue_remove((queue_t**)&filaThread, (queue_t*)atual);
+	filaint_t* atual = fila;
+	
+	queue_remove((queue_t**)&fila, (queue_t*)atual);
 
 	int numero = atual->elemento;
 	free(atual);
@@ -30,30 +43,37 @@ int push_filaint(filaint_t* fila, int numero)
 
 	if(queue_append((queue_t**)&fila, (queue_t*)atual))
 	{
-		printf("erro push!");
+		fprintf(stderr, "erro push!\n");
 		return -1;
 	}
 
 	return 0;
 }
 
-/* Funcao das threads */
-void threadFxn()
+
+void* threadFxn(void* arg)
 {
-	queue_t *elemento;
-	/* Retira primeiro elemento da fila e salva em uma variavel */
-	queue_remove(&filaThread, filaThread);
+	int antigo;
+	int elemento;
+	int i = 0;
+	for(i = 0; i < 100; i++){
+		/* Retira primeiro elemento da fila e salva em uma variavel */
+		antigo = pop_filaint(filaInteiros);
 
-	/* Cria valor novo aleatorio */
-	elemento = malloc(8 *);
+		/* Cria valor novo aleatorio */
+		elemento = rand() % 100;
 
-	/* Poe novo valor na fila */
-	queue_append(&filaThread, filaThread);
+		/* Poe novo valor na fila */
+		push_filaint(filaInteiros, elemento);
 
-	/* Imprime a operacao realizada */
+		/* Imprime a operacao realizada */
+		printf("Retirado o elemento %i da fila, e adicionado o elemento %i da fila.\n", antigo, elemento);
+
+	}	
+	pthread_exit(NULL);
 }
 
-void main()
+int main(int argc, char *argv[])
 {
 	pthread_attr_t attr;
 	long status;
@@ -64,27 +84,35 @@ void main()
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	
+	int i = 0;
+	//filaInteiros = malloc(sizeof(filaint_t));
+	//filaInteiros->next = filaInteiros;
+	//filaInteiros->prev = filaInteiros;
+	//filaInteiros->elemento = rand();
+	for(i = 0; i < 10; i++)
+		push_filaint(filaInteiros, rand()%100);
 
-	int stderr = pthread_create(&thread1, &attr, threadFxn, NULL);
+	int err = pthread_create(&thread1, &attr, threadFxn, NULL);
 	// Check if thread is created sucessfuly
-	if (stderr)
+	if (err)
 	{
-		fprintf(stderr, " A thread1 não foi criada");
-		return stderr;
+		fprintf(stderr, " A thread1 não foi criada\n");
+		return err;
 	}
 	else
 	{
-		printf("A thread 1 foi criada com a Thread ID de : %i", stderr);
+		printf("A thread 1 foi criada com a Thread ID de : %i\n", err);
 	}
-	stderr = pthread_create(&thread2, &attr, threadFxn, NULL);
+	err = pthread_create(&thread2, &attr, threadFxn, NULL);
 	// Check if thread is created sucessfuly
-	if (stderr)
+	if (err)
 	{
-		fprintf(stderr, " A thread2 não foi criada");
-		return stderr;
+		fprintf(stderr, " A thread2 não foi criada\n");
+		return err;
 	}
 	else
-		printf("A thread 2 foi criada com a Thread ID de : %i", stderr);
+		printf("A thread 2 foi criada com a Thread ID de : %i\n", err);
 	
 	status = pthread_join(thread1, NULL);
 	if(status)
