@@ -3,23 +3,30 @@
 
 #include <stdlib.h>
 #include <queue.h>
-queue_t *filaThread;
-
+#define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
+typedef struct
+{
+	int *prev, *next; // ponteiros para usar em filas
+	int elemento;
+} filaint_t;
 /* Funcao das threads */
-
+filaint_t *filaInteiros;
 void threadFxn()
 {
-	queue_t *elemento;
+	int antigo;
+	int *elemento;
+
 	/* Retira primeiro elemento da fila e salva em uma variavel */
-	queue_remove(&filaThread, filaThread);
+	antigo = pop_filaInt(filaInteiros);
 
 	/* Cria valor novo aleatorio */
-	elemento = malloc(8 *);
+	elemento = rand() % 100;
 
 	/* Poe novo valor na fila */
-	queue_append(&filaThread, filaThread);
+	push_filaInt(filaInteiros, elemento);
 
 	/* Imprime a operacao realizada */
+	printf("Retirado o elemento %i da fila, e adicionado o elemento %i da fila.\n", antigo, elemento);
 }
 
 void main()
