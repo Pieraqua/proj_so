@@ -5,8 +5,39 @@
 #include <queue.h>
 queue_t *filaThread;
 
-/* Funcao das threads */
+/* funcao de pop */
+int pop_filaint(filaint_t* fila)
+{
+	if(!fila)
+	{
+		fprintf(stderr, "Fila nula?");
+		return -1;
+	}
 
+	filaint_t* atual = filaThread;
+	queue_remove((queue_t**)&filaThread, (queue_t*)atual);
+
+	int numero = atual->elemento;
+	free(atual);
+
+	return numero;
+}
+
+/* funcao de push */
+int push_filaint(filaint_t* fila, int numero)
+{
+	filaint_t* atual = malloc(sizeof(filaint_t));
+
+	if(queue_append((queue_t**)&fila, (queue_t*)atual))
+	{
+		printf("erro push!");
+		return -1;
+	}
+
+	return 0;
+}
+
+/* Funcao das threads */
 void threadFxn()
 {
 	queue_t *elemento;
