@@ -3,17 +3,21 @@
 
 #include <stdlib.h>
 #include <queue.h>
+queue_t *filaThread;
+
 /* Funcao das threads */
+
 void threadFxn()
 {
-	queue_t **filaThread;
+	queue_t *elemento;
 	/* Retira primeiro elemento da fila e salva em uma variavel */
-	int queue_append(queue_t * *queue, queue_t * elem);
-	int queue_remove(queue_t * *queue, queue_t * elem);
+	queue_remove(&filaThread, filaThread);
 
 	/* Cria valor novo aleatorio */
+	elemento = malloc(8 *);
 
 	/* Poe novo valor na fila */
+	queue_append(&filaThread, filaThread);
 
 	/* Imprime a operacao realizada */
 }
