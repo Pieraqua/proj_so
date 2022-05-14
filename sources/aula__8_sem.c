@@ -1,5 +1,5 @@
 /* Paulo Sergio Avila Junior e Mariana Gomes Luz */
-/* Aula 7 - espera ocupada */
+/* Aula 8 - semaforos */
 
 #include <stdlib.h>
 #include <queue.h>
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 	pthread_t thread2;
 
 	/* inicializa semaforo */
-	sem_init(&semaphore, 0, 1);
+	sem_init(&semaphore, 0, 0);
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 	}
 	else
 		printf("A thread 2 foi criada com a Thread ID de : %i\n", err);
-
+	sem_post(&semaphore);
 	status = pthread_join(thread1, NULL);
 	if (status)
 	{
