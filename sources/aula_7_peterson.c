@@ -5,18 +5,31 @@
 #include <queue.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <signal.h>
+#include <sys/time.h>
 
 /* Funcao das threads */
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
+/* Struct de tratamento de sinal */
+struct sigaction action;
+/* Struct de inicializacao do timer */
+struct itimerval timer;
+
+/* Declaracao de funcoes */
+/* Funcao de handler do systick */
+void systick();
+
 typedef struct
 {
 	queue_t *prev, *next; // ponteiros para usar em filas
 	int elemento;
 } filaint_t;
 
-void print_elem(void* ptr)
+int contadores[2] = {0, 0};
+
+void print_elem(void *ptr)
 {
-	printf("%d ", ((filaint_t*) ptr)->elemento);
+	printf("%d ", ((filaint_t *)ptr)->elemento);
 }
 filaint_t *filaInteiros;
 
@@ -53,21 +66,21 @@ int push_filaint(filaint_t **fila, int numero)
 	return 0;
 }
 
-
-int flag[2] = {0,0};
+int flag[2] = {0, 0};
 int turn = 0;
 
-void *threadFxn(void* arg)
+void *threadFxn(void *arg)
 {
-	int argumento = *((int*)arg);
+	int argumento = *((int *)arg);
 	int antigo;
 	int elemento;
-	int i = 0;
-	for (i = 0; i < 100; i++)
+	while (1)
 	{
-		flag[argumento-1] = 1;
-	       	turn = 	argumento % 2;
-		while(flag[argumento%2] == 1 && turn == (argumento%2)){}
+		flag[argumento - 1] = 1;
+		turn = argumento % 2;
+		while (flag[argumento % 2] == 1 && turn == (argumento % 2))
+		{
+		}
 		/* Retira primeiro elemento da fila e salva em uma variavel */
 		antigo = pop_filaint(&filaInteiros);
 
@@ -77,10 +90,12 @@ void *threadFxn(void* arg)
 		/* Poe novo valor na fila */
 		push_filaint(&filaInteiros, elemento);
 
+		contadores[argumento - 1]++;
+
 		/* Imprime a operacao realizada */
 		printf("thread %i: tira %i da fila, põe %i, da fila: \n", argumento, antigo, elemento);
 		queue_print("fila", (queue_t *)filaInteiros, print_elem);
-		flag[argumento-1] = 0;
+		flag[argumento - 1] = 0;
 	}
 	pthread_exit(NULL);
 }
@@ -99,9 +114,9 @@ int main(int argc, char *argv[])
 
 	filaInteiros = malloc(sizeof(filaint_t));
 
-	filaInteiros->elemento = rand()%100;
-	filaInteiros->prev = (queue_t*)filaInteiros;
-	filaInteiros->next = (queue_t*)filaInteiros;
+	filaInteiros->elemento = rand() % 100;
+	filaInteiros->prev = (queue_t *)filaInteiros;
+	filaInteiros->next = (queue_t *)filaInteiros;
 
 	int i = 0;
 	// filaInteiros = malloc(sizeof(filaint_t));
@@ -111,6 +126,28 @@ int main(int argc, char *argv[])
 	for (i = 0; i < 10; i++)
 		push_filaint(&filaInteiros, rand() % 100);
 	int arg1 = 1;
+
+	// Inicializacao do temporizador
+	action.sa_handler = systick;
+	sigemptyset(&action.sa_mask);
+	action.sa_flags = 0;
+	if (sigaction(SIGALRM, &action, 0) < 0)
+	{
+		perror("Erro em sigaction: ");
+		exit(1);
+	}
+
+	timer.it_value.tv_usec = 100000; // primeiro disparo, em micro-segundos
+	timer.it_value.tv_sec = 0;		 // primeiro disparo, em segundos
+
+	timer.it_interval.tv_usec = 100000; // um disparo por milisegundo
+	timer.it_interval.tv_sec = 0;
+
+	if (setitimer(ITIMER_REAL, &timer, 0) < 0)
+	{
+		perror("Erro em setitimer: ");
+		exit(1);
+	}
 	int err = pthread_create(&thread1, &attr, threadFxn, &arg1);
 	// Check if thread is created sucessfuly
 	if (err)
@@ -148,4 +185,13 @@ int main(int argc, char *argv[])
 	}
 
 	pthread_exit(NULL);
+}
+
+void systick()
+{
+	// imprime qtd de insercoes
+	printf("\n\nForam feitas %i insercoes/s + %i insercoes/s = %i insercoes/s\n\n", contadores[0] * 10, contadores[1] * 10, 10 * (contadores[0] + contadores[1]));
+	// reseta contadores
+	contadores[0] = 0;
+	contadores[1] = 0;
 }
