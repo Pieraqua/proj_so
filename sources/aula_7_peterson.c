@@ -14,9 +14,9 @@ typedef struct
 	int elemento;
 } filaint_t;
 
-void print_elem(void *ptr)
+void print_elem(void* ptr)
 {
-	printf("%d", ((filaint_t *)ptr)->elemento);
+	printf("%d ", ((filaint_t*) ptr)->elemento);
 }
 filaint_t *filaInteiros;
 
@@ -53,17 +53,21 @@ int push_filaint(filaint_t **fila, int numero)
 	return 0;
 }
 
+
+int flag[2] = {0,0};
 int turn = 0;
 
-void *threadFxn(void *arg)
+void *threadFxn(void* arg)
 {
-	int argumento = *((int *)arg);
+	int argumento = *((int*)arg);
 	int antigo;
 	int elemento;
 	int i = 0;
 	for (i = 0; i < 100; i++)
 	{
-		while(turn!=argumento); //busy waiting
+		flag[argumento-1] = 1;
+	       	turn = 	argumento % 2;
+		while(flag[argumento%2] == 1 && turn == (argumento%2)){}
 		/* Retira primeiro elemento da fila e salva em uma variavel */
 		antigo = pop_filaint(&filaInteiros);
 
@@ -74,10 +78,9 @@ void *threadFxn(void *arg)
 		push_filaint(&filaInteiros, elemento);
 
 		/* Imprime a operacao realizada */
-		printf("thread %i: tira %i da fila, põe %i, da ", argumento, antigo, elemento);
+		printf("thread %i: tira %i da fila, põe %i, da fila: \n", argumento, antigo, elemento);
 		queue_print("fila", (queue_t *)filaInteiros, print_elem);
-
-		turn = (turn+1)%2;
+		flag[argumento-1] = 0;
 	}
 	pthread_exit(NULL);
 }
@@ -96,18 +99,18 @@ int main(int argc, char *argv[])
 
 	filaInteiros = malloc(sizeof(filaint_t));
 
-	filaInteiros->elemento = rand() % 100;
-	filaInteiros->prev = (queue_t *)filaInteiros;
-	filaInteiros->next = (queue_t *)filaInteiros;
+	filaInteiros->elemento = rand()%100;
+	filaInteiros->prev = (queue_t*)filaInteiros;
+	filaInteiros->next = (queue_t*)filaInteiros;
 
 	int i = 0;
 	// filaInteiros = malloc(sizeof(filaint_t));
 	// filaInteiros->next = filaInteiros;
 	// filaInteiros->prev = filaInteiros;
 	// filaInteiros->elemento = rand();
-	for (i = 0; i < 9; i++)
+	for (i = 0; i < 10; i++)
 		push_filaint(&filaInteiros, rand() % 100);
-	int arg1 = 0;
+	int arg1 = 1;
 	int err = pthread_create(&thread1, &attr, threadFxn, &arg1);
 	// Check if thread is created sucessfuly
 	if (err)
@@ -119,7 +122,7 @@ int main(int argc, char *argv[])
 	{
 		printf("A thread 1 foi criada com a Thread ID de : %i\n", err);
 	}
-	int arg2 = 1;
+	int arg2 = 2;
 	err = pthread_create(&thread2, &attr, threadFxn, &arg2);
 	// Check if thread is created sucessfuly
 	if (err)
