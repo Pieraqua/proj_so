@@ -64,87 +64,53 @@ int push_filaint(filaint_t **fila, int numero)
 	return 0;
 }
 
-sem_t semEscritor;
-sem_t semLeitor;
-sem_t semUsando;
+sem_t s_buffer;
+sem_t s_vaga;
+sem_t s_item;
 
-int usando = 0;
-
-void travaSemaforoLeitor()
+void *produtor(void *arg)
 {
-	sem_wait(&semUsando);
-	if(!usando)
+	int argumento = *((int *)arg);
+	int pause;
+	int item;
+	int conseguiu = 0;
+	while(1)
 	{
-		sem_wait(&semEscritor);
+		pause = rand()%4;
+		sleep(pause);
+		sem_wait(&s_vaga);
+		sem_wait(&s_buffer);
+		item = rand()%1000;
+		conseguiu = push_filaint(&filaInteiros, item);	
+
+		sem_post(&s_buffer);
+		sem_post(&s_item);
+		if(conseguiu != -1)
+			printf("%i produzido %i\n", argumento, item);
+		else
+			printf("%i nao conseguiu produzir", argumento);
 	}
-	usando++;
-	sem_post(&semUsando);
-	
 }
 
-void travaSemaforoEscritor()
+void *consumidor(void *arg)
 {
-	sem_wait(&semEscritor);
-}
-void liberaSemaforoEscritor()
-{
-	sem_post(&semEscritor);
-}
-
-void liberaSemaforo()
-{
-	sem_wait(&semUsando);
-	usando--;
-	if(usando == 0)
+	int argumento = *((int *)arg);
+	int conseguiu = 0;
+	while(1)
 	{
-		sem_post(&semEscritor);
+		sem_wait(&s_item);
+		sem_wait(&s_buffer);
+		conseguiu = pop_filaint(&filaInteiros);
+		sem_post(&s_buffer);
+		sem_post(&s_vaga);
+		if(conseguiu != -1)
+			printf("%i consumiu %i\n",argumento, conseguiu);
+		else
+			printf("%i nao conseguiu consumir", argumento);
+
+		sleep(rand()%4);
 	}
-	sem_post(&semUsando);
 }
-
-void* escritor(void* arg)
-{
-	int argumento = *(int*)arg;
-	while(1){
-	travaSemaforoEscritor();
-
-	int numero = rand()%100;
-	printf("Escritor %d removendo %d e adicionando %d\n", argumento, filaInteiros->elemento, numero);
-
-	pop_filaint(&filaInteiros);
-	push_filaint(&filaInteiros, numero);
-
-	liberaSemaforoEscritor();
-	}
-	pthread_exit(NULL);
-}
-
-void* leitor(void* arg)
-{
-	int argumento = *(int*)arg;
-	
-	while(1){
-		travaSemaforoLeitor();
-		int soma = 0;
-		int n = 0;
-		filaint_t* atual = filaInteiros;
-
-		printf("Leitor %d imprimindo \n", argumento);
-		do{
-			printf("Leitor %d: %d\n", argumento, atual->elemento);
-			soma += atual->elemento;
-			atual = (filaint_t*)atual->next;
-			n++;
-		}while(atual != filaInteiros);
-		
-		printf("Leitor %d média: %d\n", argumento, soma/n);
-
-		liberaSemaforo();
-	}
-
-	pthread_exit(NULL);
-}
-
 
 int main(int argc, char *argv[])
 {
@@ -158,23 +124,18 @@ int main(int argc, char *argv[])
 	pthread_t thread4;
 	pthread_t thread5;
 
-	/* Alimenta a fila */
-	for (int i = 0; i < 10; i++)
-	{
-		push_filaint(&filaInteiros, rand()%100);
-	}
-
 	/* inicializa semaforo */
-	sem_init(&semEscritor, 0, 1);
-	sem_init(&semLeitor, 0, 1);
-	sem_init(&semUsando,0,1);
+	sem_init(&s_buffer, 0, 1);
+	sem_init(&s_item, 0, 0);
+	sem_init(&s_vaga, 0, 1);
+
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	int i = 0;
 	int arg1 = 1;
-	int err = pthread_create(&thread1, &attr, escritor, &arg1);
+	int err = pthread_create(&thread1, &attr, produtor, &arg1);
 	// Check if thread is created sucessfuly
 	if (err)
 	{
@@ -186,7 +147,7 @@ int main(int argc, char *argv[])
 		printf("A thread 1 foi criada com a Thread ID de : %i\n", err);
 	}
 	int arg2 = 2;
-	err = pthread_create(&thread2, &attr, escritor, &arg2);
+	err = pthread_create(&thread2, &attr, produtor, &arg2);
 	// Check if thread is created sucessfuly
 	if (err)
 	{
@@ -198,7 +159,7 @@ int main(int argc, char *argv[])
 		printf("A thread 2 foi criada com a Thread ID de : %i\n", err);
 	}
 	int arg3 = 3;
-	err = pthread_create(&thread3, &attr, leitor, &arg3);
+	err = pthread_create(&thread3, &attr, produtor, &arg3);
 	// Check if thread is created sucessfuly
 	if (err)
 	{
@@ -211,7 +172,7 @@ int main(int argc, char *argv[])
 	}
 
 	int arg4 = 4;
-	err = pthread_create(&thread4, &attr, leitor, &arg4);
+	err = pthread_create(&thread4, &attr, consumidor, &arg4);
 	// Check if thread is created sucessfuly
 	if (err)
 	{
@@ -221,7 +182,7 @@ int main(int argc, char *argv[])
 	else
 		printf("A thread 4 foi criada com a Thread ID de : %i\n", err);
 	int arg5 = 5;
-	err = pthread_create(&thread5, &attr, leitor, &arg5);
+	err = pthread_create(&thread5, &attr, consumidor, &arg5);
 	// Check if thread is created sucessfuly
 	if (err)
 	{
