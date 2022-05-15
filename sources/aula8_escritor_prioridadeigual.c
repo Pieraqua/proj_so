@@ -74,39 +74,23 @@ int querUsar = 0;
 void travaSemaforoLeitor()
 {
 	//sem_wait(&semUsando);
-	if(querUsar)
-	{
-		sleep(1);
-	}
-	if(!usando)
-	{
-		sem_wait(&semEscritor);
-	}
-	usando++;
+	sem_wait(&semEscritor);
 	//sem_post(&semUsando);
 	
 }
 
 void travaSemaforoEscritor()
 {
-	querUsar++;
 	sem_wait(&semEscritor);
 }
 void liberaSemaforoEscritor()
 {
-	querUsar--;
 	sem_post(&semEscritor);
 }
 
 void liberaSemaforo()
 {
-	//sem_wait(&semUsando);
-	usando--;
-	if(usando == 0)
-	{
-		sem_post(&semEscritor);
-	}
-	//sem_post(&semUsando);
+	sem_post(&semEscritor);
 }
 
 void* escritor(void* arg)
