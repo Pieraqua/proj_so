@@ -72,13 +72,13 @@ int usando = 0;
 
 void travaSemaforoLeitor()
 {
-	sem_wait(&semUsando);
+	//sem_wait(&semUsando);
 	if(!usando)
 	{
 		sem_wait(&semEscritor);
 	}
 	usando++;
-	sem_post(&semUsando);
+	//sem_post(&semUsando);
 	
 }
 
@@ -93,13 +93,13 @@ void liberaSemaforoEscritor()
 
 void liberaSemaforo()
 {
-	sem_wait(&semUsando);
+	//sem_wait(&semUsando);
 	usando--;
 	if(usando == 0)
 	{
 		sem_post(&semEscritor);
 	}
-	sem_post(&semUsando);
+	//sem_post(&semUsando);
 }
 
 void* escritor()
