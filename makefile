@@ -26,7 +26,7 @@ LFLAGS =
 LIBS = -lm -lpthread 
 
 # define the C source files
-SRCS = sources/queue.c sources/aula8_escritor_prioridadeigual.c 
+SRCS = sources/queue.c sources/aula8_filosofosprodutores.c 
 
 # define the C object files 
 #
