@@ -7,9 +7,15 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <queue.h>
+
 /* Funcao das threads */
 #define STACKSIZE 64 * 1024 /* tamanho de pilha das threads */
 #define NUMFILO 5
+
+sem_t s_saleiro;
+sem_t s_hashis[NUMFILO];
+int numRefeicoes = 0;
+pthread_mutex_t mut;
 
 typedef struct
 {
@@ -21,10 +27,8 @@ typedef struct
 
 filafilosofo_t *filaFilosofo;
 
-sem_t hashi[NUMFILO];
+// sem_t hashi[NUMFILO];
 pthread_t filosofos[NUMFILO];
-int numRefeicoes = 0;
-pthread_mutex_t mut;
 
 void *threadFxn(void *arg)
 {
@@ -33,21 +37,28 @@ void *threadFxn(void *arg)
     int hashiEsquerda = ((long int)arg + 1) % NUMFILO;
     while (1)
     {
-        printf("Filosofo %i está meditando. \n\n", numero);
+        /* meditação */
+        printf("Filosofo %i está meditando.\n\n", numero);
         sleep(0);
-        printf("Filosofo %i está tentando pegar o hashi %i\n\n", numero, hashiEsquerda);
-        sem_wait(&hashi[hashiEsquerda]);
-        printf("Filosofo %i pegou o hashi a sua esquerda, o hashi  %i\n\n", numero, hashiEsquerda);
-        printf("Filosofo %i está tentando pegar o hashi %i\n\n", numero, hashiDireita);
-        sem_wait(&hashi[hashiDireita]);
-        printf("Filosofo %i pegou o hashi a sua direita, o hashi %i\n\n", numero, hashiDireita);
-        printf("Filosofo %i está comendo. \n\n", numero);
-        numRefeicoes = numRefeicoes + 1;
-        sleep(0);
-        printf("Filosofo %i larga o hashi %i\n\n", numero, hashiEsquerda);
-        sem_post(&hashi[hashiEsquerda]);
-        printf("Filosofo %i larga o hashi %i\n\n", numero, hashiDireita);
-        sem_post(&hashi[hashiDireita]);
+        /* tentando pegar o hashi direito*/
+        if (sem_trywait(&s_hashis[hashiDireita]) != -1) /* conseguiu pegar */
+        {
+            printf("Filosofo %i pega o hashi da direita %i.\n\n", numero, hashiDireita);
+            /* tentando pegar o hashi esquerdo*/
+            if (sem_trywait(&s_hashis[hashiEsquerda]) != -1) /* conseguiu pegar */
+            {
+                printf("Filosofo %i pega o hashi da esquerda %i.\n\n", numero, hashiEsquerda);
+                /* comendo */
+                printf("Filosofo %i está comendo.\n\n", numero);
+                numRefeicoes = numRefeicoes + 1;
+                sleep(0);
+                printf("Filosofo %i terminou de comer.\n\n", numero);
+                sem_post(&s_hashis[hashiEsquerda]);
+                printf("Filosofo %i larga o hashi da esquerda %i.\n\n", numero, hashiEsquerda);
+            }
+            sem_post(&s_hashis[hashiDireita]);
+            printf("Filosofo %i larga o hashi da direita %i.\n\n", numero, hashiDireita);
+        }
     }
     pthread_exit(NULL);
 }
@@ -58,11 +69,6 @@ int main(int argc, char *argv[])
 
     /* buffer do print não zoar*/
     setvbuf(stdout, 0, _IONBF, 0);
-    /* hashis */
-    for (i = 0; i < NUMFILO; i++)
-    {
-        sem_init(&hashi[i], 0, 1);
-    }
     /* filosofos */
     for (i = 0; i < NUMFILO; i++)
     {
@@ -72,7 +78,9 @@ int main(int argc, char *argv[])
             fprintf(stderr, " A thread não foi criada\n");
             exit(1);
         }
+        sem_init(&s_hashis[i], 0, 1);
     }
+
     while (1)
     {
         sleep(1);
@@ -81,5 +89,6 @@ int main(int argc, char *argv[])
         numRefeicoes = 0;
         pthread_mutex_unlock(&mut);
     }
+
     pthread_exit(NULL);
 }
