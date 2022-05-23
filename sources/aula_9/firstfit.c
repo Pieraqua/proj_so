@@ -3,36 +3,111 @@
 
 #include <unistd.h>
 #include <malloc.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 #define BLOCSIZE 1 << 24
-char *maiorFragmento;
-char *menorFragmento;
+int maiorFragmento = 0;
+int menorFragmento = 4096;
+int medioFragmento = 0;
+int livreFragmento = 0;
+bool vetorRepresentacao[4096];
 
-typedef struct
+void fragmento()
 {
-    queue_t *prev, *next; // ponteiros para usar em filas
-    char *inicio, fim;
-    int tamanho;
-} bloco_t;
+    int contador = 0;
+    int i = 0;
+    for (i = 0; i < 4096; i++)
+    {
+        if (vetorRepresentacao[i] == false)
+        {
+            contador++;
+        }
+        else
+        {
+            if (contador > maiorFragmento)
+            {
+                maiorFragmento = contador;
+            }
+            if (contador < menorFragmento && contador != 0)
+            {
+                menorFragmento = contador;
+            }
+            if (vetorRepresentacao[i - 1] == 0)
+            {
+                livreFragmento = livreFragmento + 1;
+            }
+            medioFragmento = contador + medioFragmento;
+            contador = 0;
+        }
+    }
+    if (vetorRepresentacao[4096] == false)
+    {
+        if (contador > maiorFragmento)
+        {
+            maiorFragmento = contador;
+        }
+        if (contador < menorFragmento)
+        {
+            menorFragmento = contador;
+        }
+        if (vetorRepresentacao[i - 1] == 0)
+        {
+            livreFragmento = livreFragmento + 1;
+        }
+        medioFragmento = contador + medioFragmento;
+        contador = 0;
+    }
+    if (livreFragmento != 0)
+    {
+        medioFragmento = medioFragmento / livreFragmento;
+    }
+    else
+    {
+        medioFragmento = 0;
+    }
+}
+
+void gerenciamento(int bloco)
+{
+    int contador = 0;
+    int i = 0;
+    int j = 0;
+    for (i = 0; i < 4096; i++)
+    {
+        if (vetorRepresentacao[i] == false)
+        {
+            contador++;
+        }
+        else
+        {
+            contador = 0;
+        }
+        if (contador >= bloco)
+        {
+            for (j = 0; j < bloco; j++)
+            {
+                vetorRepresentacao[i - contador + j] = true;
+            }
+            break;
+        }
+    }
+}
 
 int main()
 {
-    char *c;
     int i;
-    bool vetorRepresentacao
-        produz blocos de tamanho aleatorio
-            ve tamanho medio dos blocos
-                gerencia os blocos
-                    retorna numero de fragmentos livres,
-        tamanho do menor fragmento, tamanho do maior fragmento, tamanho médio dos fragmentos;
-}
-
-char *achaArea(bloco, memoria)
-{
-    acha memoria ainda não usada que o bloco cabe
-}
-
-void gerenciamento(bloco)
-{
-    areaEscolhida = achaArea(bloco, memoria);
+    int tamanhoBloco = 0;
+    for (i = 0; i < 4096; i++)
+    {
+        vetorRepresentacao[i] = false;
+    }
+    for (i = 0; i <= 10; i++)
+    {
+        tamanhoBloco = rand() % 409;
+        gerenciamento(tamanhoBloco);
+    }
+    fragmento();
+    printf("O tamanho do maior fragmento é %i\n\nO tamanho do menor fragmento é %i\n\nO tamanho médio dos fragmentos é %i\n\nA quantidade de fragmentos livre é %i", maiorFragmento, menorFragmento, medioFragmento, livreFragmento);
+    return 0;
 }
